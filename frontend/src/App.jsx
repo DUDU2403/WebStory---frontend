@@ -2,6 +2,9 @@ import React, { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 import { Home, MapPin, Search, PlusCircle, Trash2, MessageCircle, Camera, Loader2 } from 'lucide-react';
 
+// URL DO SEU BACKEND NO RENDER (Sempre sem a barra no final)
+const API_URL = "https://meu-imovel-api.onrender.com";
+
 function App() {
   const [imoveis, setImoveis] = useState([]);
   const [busca, setBusca] = useState("");
@@ -17,7 +20,8 @@ function App() {
 
   const carregarImoveis = async () => {
     try {
-      const res = await axios.get('https://meu-imovel-api.onrender.com/imoveis');
+      // Usando a variável API_URL para buscar os dados
+      const res = await axios.get(`${API_URL}/imoveis`);
       setImoveis(res.data);
     } catch (err) {
       console.error("Erro ao carregar dados", err);
@@ -64,44 +68,50 @@ function App() {
   // FUNÇÃO PRINCIPAL: Upload + Cadastro
   const cadastrar = async (e) => {
     e.preventDefault();
-    if (!fotoArquivo) return alert("Por favor, selecione uma foto!");
+    
+    // Se não for edição e não tiver foto, avisa
+    if (!selecionadoParaEdicao && !fotoArquivo) return alert("Por favor, selecione uma foto!");
     
     setCarregando(true);
     try {
-      // 1. Upload para o Cloudinary
-      const formData = new FormData();
-      formData.append("file", fotoArquivo);
-      formData.append("upload_preset", "meu_imovel");
+      let imagemUrl = novoImovel.imagemUrl;
 
-      const resCloud = await axios.post(
-        `https://api.cloudinary.com/v1_1/dolazq2mw/image/upload`,
-        formData
-      );
-      
-      const urlDaFoto = resCloud.data.secure_url;
+      // 1. Upload para o Cloudinary (se houver novo arquivo selecionado)
+      if (fotoArquivo) {
+        const formData = new FormData();
+        formData.append("file", fotoArquivo);
+        formData.append("upload_preset", "meu_imovel"); // Certifique-se que no Cloudinary está 'Unsigned'
 
-      // 2. Salvar ou Atualizar no Backend
-      const imagemUrl = fotoArquivo ? urlDaFoto : novoImovel.imagemUrl;
+        const resCloud = await axios.post(
+          `https://api.cloudinary.com/v1_1/dolazq2mw/image/upload`,
+          formData
+        );
+        imagemUrl = resCloud.data.secure_url;
+      }
+
+      // 2. Salvar ou Atualizar no Backend usando API_URL
       if (selecionadoParaEdicao) {
-        await axios.put(`https://meu-imovel-api.onrender.com/imoveis/${selecionadoParaEdicao}`, {
+        await axios.put(`${API_URL}/imoveis/${selecionadoParaEdicao}`, {
           ...novoImovel,
           imagemUrl
         });
         alert("🏠 Anúncio atualizado com sucesso!");
       } else {
-        await axios.post('https://meu-imovel-api.onrender.com/imoveis', {
+        await axios.post(`${API_URL}/imoveis`, {
           ...novoImovel,
           imagemUrl
         });
         alert("🏠 Imóvel cadastrado com sucesso!");
       }
 
+      // Limpar formulário e voltar ao modo buscar
       setSelecionadoParaEdicao(null);
       setNovoImovel({ titulo: "", preco: "", localizacao: "", contato: "", tipo: "venda", anuncianteTipo: "vendedor", imagemUrl: "" });
       setFotoArquivo(null);
+      setModo("buscar");
       carregarImoveis();
     } catch (err) {
-      alert("Erro ao cadastrar. Verifique o console.");
+      alert("Erro ao processar. Verifique se o servidor no Render está ativo.");
       console.error(err);
     } finally {
       setCarregando(false);
@@ -110,21 +120,25 @@ function App() {
 
   const excluir = async (id) => {
     if (window.confirm("Deseja apagar este anúncio permanentemente?")) {
-      await axios.delete(`https://meu-imovel-api.onrender.com/imoveis/${id}`);
-      carregarImoveis();
+      try {
+        await axios.delete(`${API_URL}/imoveis/${id}`);
+        carregarImoveis();
+      } catch (err) {
+        console.error("Erro ao excluir", err);
+      }
     }
   };
 
   const filtrados = imoveis.filter(i => {
-    const matchBusca = i.titulo.toLowerCase().includes(busca.toLowerCase()) || 
-                       i.localizacao.toLowerCase().includes(busca.toLowerCase());
+    const matchBusca = i.titulo?.toLowerCase().includes(busca.toLowerCase()) || 
+                       i.localizacao?.toLowerCase().includes(busca.toLowerCase());
     const matchAba = abaAtiva === "todos" || i.tipo === abaAtiva;
     return matchBusca && matchAba;
   });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      {/* HEADER - Moderno com Gradiente */}
+      {/* HEADER */}
       <header className="bg-gradient-to-r from-indigo-600 via-blue-600 to-blue-700 text-white p-6 shadow-2xl flex flex-col md:flex-row justify-between items-center gap-6 sticky top-0 z-50 border-b-4 border-indigo-400">
         <div className="flex items-center gap-3">
           <div className="bg-white/20 backdrop-blur p-3 rounded-2xl">
@@ -140,7 +154,6 @@ function App() {
           <input 
             placeholder="Buscar por cidade, bairro..." 
             className="w-full pl-12 pr-5 py-3 rounded-full text-slate-800 font-medium focus:ring-4 focus:ring-blue-300 outline-none transition-all shadow-xl text-base bg-white/95 backdrop-blur"
-            style={{ fontFamily: '"Inter", sans-serif', letterSpacing: '0.3px' }}
             onChange={e => setBusca(e.target.value)}
           />
         </div>
@@ -150,13 +163,13 @@ function App() {
         <div className="lg:col-span-4 flex gap-3 mb-8 justify-center md:justify-start">
           <button
             onClick={() => setModo("buscar")}
-            className={`px-6 py-2 font-bold rounded-full ${modo === "buscar" ? "bg-indigo-700 text-white" : "bg-white text-slate-700 border border-indigo-200"}`}
+            className={`px-6 py-2 font-bold rounded-full transition-all ${modo === "buscar" ? "bg-indigo-700 text-white shadow-lg" : "bg-white text-slate-700 border border-indigo-200 hover:bg-indigo-50"}`}
           >
             🔎 Buscar imóveis
           </button>
           <button
             onClick={() => setModo("anunciar")}
-            className={`px-6 py-2 font-bold rounded-full ${modo === "anunciar" ? "bg-green-700 text-white" : "bg-white text-slate-700 border border-green-200"}`}
+            className={`px-6 py-2 font-bold rounded-full transition-all ${modo === "anunciar" ? "bg-green-700 text-white shadow-lg" : "bg-white text-slate-700 border border-green-200 hover:bg-green-50"}`}
           >
             🏠 Anunciar imóvel
           </button>
@@ -169,7 +182,7 @@ function App() {
               <div className="bg-indigo-100 p-2 rounded-xl">
                 <PlusCircle size={24} className="text-indigo-600" />
               </div>
-              Novo Anúncio
+              {selecionadoParaEdicao ? "Editar Anúncio" : "Novo Anúncio"}
             </h2>
             
             <div className="space-y-2">
@@ -203,7 +216,7 @@ function App() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-black text-slate-700 uppercase tracking-wider">📸 Selecione a Foto</label>
+              <label className="text-xs font-black text-slate-700 uppercase tracking-wider">📸 Foto do Imóvel</label>
               <div className="relative w-full h-40 border-3 border-dashed border-indigo-300 rounded-2xl flex flex-col items-center justify-center bg-gradient-to-br from-indigo-50 to-blue-50 hover:from-indigo-100 hover:to-blue-100 transition-all cursor-pointer overflow-hidden group">
                 {fotoArquivo ? (
                    <img src={URL.createObjectURL(fotoArquivo)} className="w-full h-full object-cover" alt="preview" />
@@ -212,8 +225,7 @@ function App() {
                 ) : (
                   <>
                     <Camera className="text-indigo-400 mb-2 group-hover:scale-110 transition-transform" size={32} />
-                    <span className="text-sm text-indigo-600 font-bold">Clique para enviar</span>
-                    <span className="text-xs text-indigo-400 mt-1">JPG, PNG (máx 5MB)</span>
+                    <span className="text-sm text-indigo-600 font-bold">Clique para selecionar</span>
                   </>
                 )}
                 <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" 
@@ -226,36 +238,36 @@ function App() {
               <input
                 ref={localizacaoRef}
                 required
-                placeholder="Digite seu endereço..."
+                placeholder="Ex: Rua Tal, Bairro tal, Cidade..."
                 className="w-full p-3 bg-gradient-to-r from-slate-50 to-indigo-50 rounded-2xl border-2 border-indigo-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-200 outline-none transition-all text-slate-800 font-medium"
                 value={novoImovel.localizacao}
                 onChange={e => setNovoImovel({...novoImovel, localizacao: e.target.value})}
               />
-              <p className="text-xs text-slate-500">Sugestões carregadas via Google Places (apenas no modo anunciar).</p>
             </div>
 
             <div className="space-y-2">
               <label className="text-xs font-black text-slate-700 uppercase tracking-wider">📱 WhatsApp</label>
-              <input required placeholder="11 98888-7777" className="w-full p-3 bg-gradient-to-r from-slate-50 to-indigo-50 rounded-2xl border-2 border-indigo-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-200 outline-none transition-all text-slate-800 font-medium" 
+              <input required placeholder="Ex: 11988887777" className="w-full p-3 bg-gradient-to-r from-slate-50 to-indigo-50 rounded-2xl border-2 border-indigo-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-200 outline-none transition-all text-slate-800 font-medium" 
                 value={novoImovel.contato} onChange={e => setNovoImovel({...novoImovel, contato: e.target.value})} />
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2">
               <button 
                 disabled={carregando}
-                className={`flex-1 p-4 rounded-2xl font-black text-white shadow-xl transition-all flex justify-center items-center gap-3 text-lg uppercase tracking-wider ${carregando ? 'bg-slate-400 cursor-not-allowed' : 'bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 active:scale-95 hover:shadow-2xl'}`}
+                className={`w-full p-4 rounded-2xl font-black text-white shadow-xl transition-all flex justify-center items-center gap-3 text-lg uppercase tracking-wider ${carregando ? 'bg-slate-400 cursor-not-allowed' : 'bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 active:scale-95'}`}
               >
-                {carregando ? <Loader2 className="animate-spin" size={24} /> : (selecionadoParaEdicao ? "💾 Salvar Alterações" : "✨ Publicar Agora")}
+                {carregando ? <Loader2 className="animate-spin" size={24} /> : (selecionadoParaEdicao ? "💾 Atualizar" : "✨ Publicar")}
               </button>
               {selecionadoParaEdicao && (
                 <button 
                   type="button"
                   onClick={() => {
                     setSelecionadoParaEdicao(null);
-                    setNovoImovel({ titulo: "", preco: "", localizacao: "", contato: "", tipo: "venda", anuncianteTipo: "vendedor" });
+                    setNovoImovel({ titulo: "", preco: "", localizacao: "", contato: "", tipo: "venda", anuncianteTipo: "vendedor", imagemUrl: "" });
                     setFotoArquivo(null);
+                    setModo("buscar");
                   }}
-                  className="flex-1 p-4 rounded-2xl font-black text-slate-700 bg-slate-100 hover:bg-slate-200 transition-all"
+                  className="w-full p-3 rounded-2xl font-black text-slate-700 bg-slate-100 hover:bg-slate-200 transition-all"
                 >
                   ✖ Cancelar
                 </button>
@@ -267,89 +279,66 @@ function App() {
         {/* COLUNA DOS CARDS */}
         <section className={`lg:col-span-3 ${modo === "anunciar" ? "hidden" : "block"}`}>
           {/* ABAS DE FILTRO */}
-          <div className="flex gap-3 mb-8 sticky top-24 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 z-10 -mx-6 px-6 py-5 border-b-3 border-indigo-200 rounded-b-3xl shadow-lg">
+          <div className="flex flex-wrap gap-2 mb-8 sticky top-24 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 z-10 py-5 border-b-2 border-indigo-100 shadow-sm">
             <button
               onClick={() => setAbaAtiva("todos")}
-              className={`px-6 py-3 font-black rounded-2xl transition-all transform hover:scale-105 ${
-                abaAtiva === "todos" 
-                  ? "bg-indigo-600 text-white shadow-xl scale-105 border-2 border-indigo-400" 
-                  : "bg-white text-slate-700 hover:bg-indigo-50 border-2 border-indigo-200"
-              }`}
+              className={`px-5 py-2 font-black rounded-xl transition-all ${abaAtiva === "todos" ? "bg-indigo-600 text-white shadow-md" : "bg-white text-slate-600 border border-indigo-100"}`}
             >
-              📋 Todos os Anúncios
+              📋 Todos
             </button>
             <button
               onClick={() => setAbaAtiva("venda")}
-              className={`px-6 py-3 font-black rounded-2xl transition-all transform hover:scale-105 ${
-                abaAtiva === "venda" 
-                  ? "bg-green-600 text-white shadow-xl scale-105 border-2 border-green-400" 
-                  : "bg-white text-slate-700 hover:bg-green-50 border-2 border-green-200"
-              }`}
+              className={`px-5 py-2 font-black rounded-xl transition-all ${abaAtiva === "venda" ? "bg-green-600 text-white shadow-md" : "bg-white text-slate-600 border border-green-100"}`}
             >
-              🏷️ À Venda
+              🏷️ Venda
             </button>
             <button
               onClick={() => setAbaAtiva("aluguel")}
-              className={`px-6 py-3 font-black rounded-2xl transition-all transform hover:scale-105 ${
-                abaAtiva === "aluguel" 
-                  ? "bg-amber-600 text-white shadow-xl scale-105 border-2 border-amber-400" 
-                  : "bg-white text-slate-700 hover:bg-amber-50 border-2 border-amber-200"
-              }`}
+              className={`px-5 py-2 font-black rounded-xl transition-all ${abaAtiva === "aluguel" ? "bg-amber-600 text-white shadow-md" : "bg-white text-slate-600 border border-amber-100"}`}
             >
-              🔑 Para Alugar
+              🔑 Aluguel
             </button>
           </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {filtrados.length > 0 ? filtrados.map(imovel => (
-              <div key={imovel._id} className="bg-white rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transition-all border-2 border-indigo-100 group hover:-translate-y-2">
-                <div className="relative h-56 overflow-hidden bg-gradient-to-b from-slate-200 to-slate-300">
-                  <img src={imovel.imagemUrl} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="imovel" />
-                  <div className={`absolute top-4 right-4 ${imovel.tipo === 'venda' ? 'bg-green-500' : 'bg-amber-500'} text-white px-4 py-2 rounded-full font-black shadow-lg text-sm`}>
-                    {imovel.tipo === 'venda' ? '🏷️ À Venda' : '🔑 Aluga'}
-                  </div>
-                  <div className="absolute top-4 left-4 bg-white/90 text-slate-800 px-3 py-1 rounded-full font-bold text-xs border border-slate-200">
-                    {imovel.anuncianteTipo === 'vendedor' ? 'Vendedor' : 'Locador'}
-                  </div>
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
-                    <p className="text-white font-black text-2xl">R$ {imovel.preco?.toLocaleString('pt-BR')}</p>
+              <div key={imovel._id} className="bg-white rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all border border-indigo-50 group">
+                <div className="relative h-52 overflow-hidden bg-slate-100">
+                  <img src={imovel.imagemUrl} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="imovel" />
+                  <div className={`absolute top-3 right-3 ${imovel.tipo === 'venda' ? 'bg-green-500' : 'bg-amber-500'} text-white px-3 py-1 rounded-full font-black text-xs shadow-md`}>
+                    {imovel.tipo === 'venda' ? 'À VENDA' : 'ALUGUEL'}
                   </div>
                 </div>
                 
-                <div className="p-6">
-                  <h3 className="font-black text-xl mb-2 truncate text-slate-800">{imovel.titulo}</h3>
-                  <p className="text-indigo-600 text-sm flex items-center gap-2 mb-6 font-bold"><MapPin size={16} className="text-indigo-500" /> {imovel.localizacao}</p>
+                <div className="p-5">
+                  <p className="text-2xl font-black text-indigo-700 mb-1">R$ {Number(imovel.preco).toLocaleString('pt-BR')}</p>
+                  <h3 className="font-bold text-lg mb-1 truncate text-slate-800">{imovel.titulo}</h3>
+                  <p className="text-slate-500 text-sm flex items-center gap-1 mb-4"><MapPin size={14} /> {imovel.localizacao}</p>
                   
-                  <div className="flex flex-col gap-3">
-                    <a href={`https://wa.me/${imovel.contato}`} target="_blank" className="bg-gradient-to-r from-green-500 to-green-600 text-white p-3 rounded-2xl flex justify-center items-center gap-2 font-black hover:from-green-600 hover:to-green-700 transition-all shadow-lg hover:shadow-xl transform hover:scale-105">
-                      <MessageCircle size={20} /> Chamar no WhatsApp
+                  <div className="flex flex-col gap-2">
+                    <a href={`https://wa.me/${imovel.contato}`} target="_blank" rel="noreferrer" className="bg-green-500 text-white p-3 rounded-xl flex justify-center items-center gap-2 font-bold hover:bg-green-600 transition-all">
+                      <MessageCircle size={18} /> WhatsApp
                     </a>
                     <div className="flex gap-2">
                       <button onClick={() => {
                         setSelecionadoParaEdicao(imovel._id);
-                        setNovoImovel({
-                          titulo: imovel.titulo,
-                          preco: imovel.preco,
-                          localizacao: imovel.localizacao,
-                          contato: imovel.contato,
-                          tipo: imovel.tipo,
-                          anuncianteTipo: imovel.anuncianteTipo,
-                          imagemUrl: imovel.imagemUrl
-                        });
+                        setNovoImovel({...imovel});
                         setFotoArquivo(null);
-                      }} className="flex-1 bg-blue-500 text-white p-3 rounded-2xl font-bold hover:bg-blue-600 transition-all">
+                        setModo("anunciar");
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }} className="flex-1 bg-slate-100 text-slate-600 p-2 rounded-xl font-bold hover:bg-indigo-50 hover:text-indigo-600 transition-all text-sm">
                         ✏️ Editar
                       </button>
-                      <button onClick={() => excluir(imovel._id)} className="flex-1 bg-red-100 text-red-600 p-3 rounded-2xl font-bold hover:bg-red-200 transition-all">
-                        🗑️ Remover
+                      <button onClick={() => excluir(imovel._id)} className="flex-1 bg-slate-100 text-red-400 p-2 rounded-xl font-bold hover:bg-red-50 hover:text-red-600 transition-all text-sm">
+                        🗑️ Apagar
                       </button>
                     </div>
                   </div>
                 </div>
               </div>
             )) : (
-              <div className="col-span-full text-center py-16">
-                <p className="text-2xl font-black text-slate-400 mb-2">📭 Nenhum anúncio encontrado</p>
-                <p className="text-slate-500 font-medium">Tente ajustar sua busca ou escolha outra categoria</p>
+              <div className="col-span-full text-center py-20">
+                <p className="text-xl font-bold text-slate-400">Nenhum imóvel encontrado.</p>
               </div>
             )}
           </div>

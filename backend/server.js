@@ -40,6 +40,7 @@ const User = mongoose.model('User', new mongoose.Schema({
   nome: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   cpf: { type: String, required: true, unique: true },
+  creci: { type: String }, // Registro profissional do corretor
   telefone: { type: String, required: true },
   senha: { type: String, required: true },
   createdAt: { type: Date, default: Date.now }
@@ -52,8 +53,10 @@ const Imovel = mongoose.model('Imovel', new mongoose.Schema({
   localizacao: String,
   contato: String,
   imagemUrl: String,
-  tipo: String, // 'venda' ou 'aluguel'
+  tipoNegocio: { type: String, enum: ['venda', 'aluguel'], default: 'venda' },
+  tipoImovel: { type: String, enum: ['casa', 'apto', 'terreno'], default: 'casa' },
   anuncianteTipo: String, // 'vendedor' ou 'locador'
+  comissao: Number, // Porcentagem ou valor fixo combinado
   status: { type: String, default: 'disponivel' }, // disponivel, vendido
   criadoPor: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }
 }));
@@ -104,7 +107,7 @@ const enviarParaGoogleSheets = async (dados) => {
 // Cadastro de Leads
 app.post('/auth/register', async (req, res) => {
   try {
-    const { nome, email, cpf, telefone, senha } = req.body;
+    const { nome, email, cpf, creci, telefone, senha } = req.body;
 
     let user = await User.findOne({ $or: [{ email }, { cpf }] });
     if (user) return res.status(400).json({ message: "Usuário ou CPF já cadastrado." });
@@ -112,7 +115,7 @@ app.post('/auth/register', async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const senhaHashed = await bcrypt.hash(senha, salt);
 
-    user = new User({ nome, email, cpf, telefone, senha: senhaHashed });
+    user = new User({ nome, email, cpf, creci, telefone, senha: senhaHashed });
     await user.save();
 
     // Envio automático dos dados para a planilha via Webhook

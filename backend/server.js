@@ -11,9 +11,27 @@ app.use(express.json());
 app.use(cors());
 
 // Conexão com MongoDB
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log("✅ BANCO CONECTADO"))
-  .catch(err => console.log("❌ ERRO MONGO:", err));
+const connectDB = async () => {
+  try {
+    await mongoose.connect(process.env.MONGO_URI);
+    console.log("✅ BANCO CONECTADO");
+  } catch (err) {
+    console.error("❌ ERRO NA CONEXÃO INICIAL DO MONGO:", err.message);
+    // Tenta reconectar a cada 5 segundos se a conexão inicial falhar
+    setTimeout(connectDB, 5000);
+  }
+};
+
+connectDB();
+
+// Monitoramento de eventos da conexão
+mongoose.connection.on('error', err => {
+  console.error("❌ ERRO DE CONEXÃO DURANTE A EXECUÇÃO:", err);
+});
+
+mongoose.connection.on('disconnected', () => {
+  console.warn("⚠️ MONGO DESCONECTADO. O Mongoose tentará reconectar automaticamente...");
+});
 
 // --- MODELOS ---
 

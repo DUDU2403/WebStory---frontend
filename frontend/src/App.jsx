@@ -1,14 +1,20 @@
 import React, { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 import { Home, MapPin, Search, PlusCircle, Trash2, MessageCircle, Camera, Loader2, UserPlus, LogIn, LogOut, X } from 'lucide-react';
+import PrivacyPolicy from './PrivacyPolicy';
 
 const API_URL = "https://meu-imovel-api.onrender.com";
 
 // Componente de Card extraído para melhor organização e performance
-const ImovelCard = ({ imovel, usuario, onEdit, onDelete }) => (
+const ImovelCard = ({ imovel, usuario, onEdit, onDelete, onSell }) => (
   <div className="group bg-white rounded-[2rem] overflow-hidden shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 border border-slate-100">
     <div className="relative h-64 overflow-hidden">
       <img src={imovel.imagemUrl} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt={imovel.titulo} />
+      {imovel.status === 'vendido' && (
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center">
+          <span className="bg-white text-slate-900 px-6 py-2 rounded-full font-black uppercase tracking-widest">Vendido</span>
+        </div>
+      )}
       <div className={`absolute top-4 left-4 ${imovel.tipo === 'venda' ? 'bg-indigo-600' : 'bg-amber-500'} text-white px-4 py-1.5 rounded-xl font-bold text-[10px] tracking-widest uppercase shadow-lg`}>
         {imovel.tipo.toUpperCase()}
       </div>
@@ -58,9 +64,11 @@ function App() {
   const [token, setToken] = useState(localStorage.getItem('token') || null);
   const [mostrarAuth, setMostrarAuth] = useState(false);
   const [authModo, setAuthModo] = useState("login"); // 'login' ou 'cadastro'
+  const [mostrarPolitica, setMostrarPolitica] = useState(false);
+  const [aceitouTermos, setAceitouTermos] = useState(false);
   
   // Estados para Cadastro de Usuário (Leads)
-  const [dadosAuth, setDadosAuth] = useState({ nome: "", endereço: "", email: "", cpf: "", telefone: "", senha: "" });
+  const [dadosAuth, setDadosAuth] = useState({ nome: "", email: "", cpf: "", telefone: "", senha: "" });
 
   // Estados para o Imóvel
   const [novoImovel, setNovoImovel] = useState({ titulo: "", preco: "", localizacao: "", contato: "", tipo: "venda", anuncianteTipo: "vendedor", imagemUrl: "" });
@@ -82,6 +90,10 @@ function App() {
 
   const manipularAuth = async (e) => {
     e.preventDefault();
+    if (authModo === "cadastro" && !aceitouTermos) {
+      return alert("Você precisa aceitar a Política de Privacidade para continuar.");
+    }
+    
     setCarregando(true);
     try {
       const rota = authModo === "login" ? "/auth/login" : "/auth/register";
@@ -162,6 +174,18 @@ function App() {
     }
   };
 
+  const confirmarVenda = async (id) => {
+    if (window.confirm("Ao confirmar, você reconhece a venda e a taxa de 2% devida ao site. Prosseguir?")) {
+      try {
+        await axios.post(`${API_URL}/imoveis/${id}/vender`, {}, { headers: { 'x-auth-token': token } });
+        carregarImoveis();
+        alert("Negócio fechado! Entraremos em contato para as instruções de repasse da taxa.");
+      } catch (err) {
+        alert("Erro ao confirmar venda.");
+      }
+    }
+  };
+
   const filtrados = imoveis.filter(i => {
     const matchBusca = i.titulo?.toLowerCase().includes(busca.toLowerCase()) || i.localizacao?.toLowerCase().includes(busca.toLowerCase());
     const matchAba = abaAtiva === "todos" || i.tipo === abaAtiva;
@@ -171,6 +195,9 @@ function App() {
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 selection:bg-indigo-100 selection:text-indigo-700 font-sans">
       
+      {/* POLÍTICA DE PRIVACIDADE MODAL */}
+      {mostrarPolitica && <PrivacyPolicy onClose={() => setMostrarPolitica(false)} />}
+
       {/* MODAL DE LOGIN/CADASTRO */}
       {mostrarAuth && (
         <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
@@ -190,6 +217,18 @@ function App() {
                     onChange={e => setDadosAuth({...dadosAuth, cpf: e.target.value})} />
                   <input required placeholder="WhatsApp (DDD + Número)" className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
                     onChange={e => setDadosAuth({...dadosAuth, telefone: e.target.value})} />
+                  
+                  <div className="flex items-start gap-3 p-2">
+                    <input 
+                      type="checkbox" 
+                      id="terms" 
+                      className="mt-1 w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500" 
+                      onChange={(e) => setAceitouTermos(e.target.checked)}
+                    />
+                    <label htmlFor="terms" className="text-xs text-slate-500 leading-tight">
+                      Aceito a <button type="button" onClick={() => setMostrarPolitica(true)} className="text-indigo-600 font-bold hover:underline">Política de Privacidade</button> e o processamento dos meus dados para captação de leads.
+                    </label>
+                  </div>
                 </>
               )}
               <input required type="email" placeholder="Seu E-mail" className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
@@ -332,6 +371,7 @@ function App() {
                 imovel={imovel} 
                 usuario={usuario} 
                 onDelete={excluir}
+                onSell={confirmarVenda}
                 onEdit={(imovel) => {
                   setSelecionadoParaEdicao(imovel._id);
                   setNovoImovel({...imovel});

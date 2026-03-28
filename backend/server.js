@@ -35,7 +35,18 @@ const Imovel = mongoose.model('Imovel', new mongoose.Schema({
   imagemUrl: String,
   tipo: String, // 'venda' ou 'aluguel'
   anuncianteTipo: String, // 'vendedor' ou 'locador'
+  status: { type: String, default: 'disponivel' }, // disponivel, vendido
   criadoPor: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }
+}));
+
+// Modelo de Transação para Segurança Financeira
+const Venda = mongoose.model('Venda', new mongoose.Schema({
+  imovelId: { type: mongoose.Schema.Types.ObjectId, ref: 'Imovel' },
+  vendedorId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  valorVenda: Number,
+  comissaoSite: Number, // Calculado (2%)
+  pago: { type: Boolean, default: false },
+  dataVenda: { type: Date, default: Date.now }
 }));
 
 // --- MIDDLEWARE DE PROTEÇÃO ---
@@ -145,6 +156,36 @@ app.put('/imoveis/:id', auth, async (req, res) => {
         res.json(atualizado);
     } catch (err) {
         res.status(500).send(err);
+    }
+});
+
+// ROTA 5: REGISTRAR VENDA (O "Caminho de Segurança")
+app.post('/imoveis/:id/vender', auth, async (req, res) => {
+    try {
+        const imovel = await Imovel.findById(req.params.id);
+        if (!imovel || imovel.criadoPor.toString() !== req.user.id) {
+            return res.status(403).json({ message: "Operação não permitida." });
+        }
+
+        // Calcula os 2%
+        const valorComissao = imovel.preco * 0.02;
+
+        const novaVenda = new Venda({
+            imovelId: imovel._id,
+            vendedorId: req.user.id,
+            valorVenda: imovel.preco,
+            comissaoSite: valorComissao
+        });
+
+        await novaVenda.save();
+        
+        // Atualiza status do imóvel
+        imovel.status = 'vendido';
+        await imovel.save();
+
+        res.json({ message: "Venda registrada! Comissão de R$" + valorComissao + " pendente.", venda: novaVenda });
+    } catch (err) {
+        res.status(500).json({ message: "Erro ao registrar venda." });
     }
 });
 

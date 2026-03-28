@@ -71,12 +71,11 @@ function App() {
       // 1. Upload para o Cloudinary
       const formData = new FormData();
       formData.append("file", fotoArquivo);
-      formData.append("upload_preset", import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET);
+      formData.append("upload_preset", import.meta.env.ml_default);
 
       const resCloud = await axios.post(
-        `// Exemplo: se seu nome for "dudu2403"
-const url = "https://api.cloudinary.com/v1_1/dolazq2mw/image/upload";`,
-        formData.append('upload_preset', 'ml_default');
+        `https://api.cloudinary.com/v1_1/dolazq2mw/image/upload`,
+        formData
       );
       
       const urlDaFoto = resCloud.data.secure_url;

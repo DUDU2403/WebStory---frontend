@@ -19,7 +19,7 @@ function App() {
   const [authModo, setAuthModo] = useState("login"); // 'login' ou 'cadastro'
   
   // Estados para Cadastro de Usuário (Leads)
-  const [dadosAuth, setDadosAuth] = useState({ nome: "", email: "", cpf: "", telefone: "", senha: "" });
+  const [dadosAuth, setDadosAuth] = useState({ nome: "", endereço: "", email: "", cpf: "", telefone: "", senha: "" });
 
   // Estados para o Imóvel
   const [novoImovel, setNovoImovel] = useState({ titulo: "", preco: "", localizacao: "", contato: "", tipo: "venda", anuncianteTipo: "vendedor", imagemUrl: "" });

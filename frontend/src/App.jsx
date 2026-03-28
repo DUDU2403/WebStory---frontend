@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
-import { Home, MapPin, Search, PlusCircle, Trash2, MessageCircle, Camera, Loader2, UserPlus, LogIn, LogOut, X } from 'lucide-react';
+import { Home, MapPin, Search, PlusCircle, Trash2, MessageCircle, Camera, Loader2, UserPlus, LogIn, LogOut, X, ShieldCheck, Users, Zap, BarChart3 } from 'lucide-react';
 import PrivacyPolicy from './PrivacyPolicy';
 
 const API_URL = "https://meu-imovel-api.onrender.com";
@@ -15,14 +15,14 @@ const ImovelCard = ({ imovel, usuario, onEdit, onDelete, onSell }) => (
           <span className="bg-white text-slate-900 px-6 py-2 rounded-full font-black uppercase tracking-widest">Vendido</span>
         </div>
       )}
-      <div className={`absolute top-4 left-4 ${imovel.tipo === 'venda' ? 'bg-indigo-600' : 'bg-amber-500'} text-white px-4 py-1.5 rounded-xl font-bold text-[10px] tracking-widest uppercase shadow-lg`}>
-        {imovel.tipo.toUpperCase()}
+      <div className={`absolute top-4 left-4 ${imovel.tipoNegocio === 'venda' ? 'bg-indigo-600' : 'bg-emerald-500'} text-white px-4 py-1.5 rounded-xl font-bold text-[10px] tracking-widest uppercase shadow-lg`}>
+        {imovel.tipoNegocio?.toUpperCase()} • {imovel.tipoImovel?.toUpperCase()}
       </div>
     </div>
     
     <div className="p-7">
       <div className="flex justify-between items-start mb-4">
-        <h3 className="font-bold text-xl text-slate-900 group-hover:text-indigo-600 transition-colors leading-tight">{imovel.titulo}</h3>
+        <h3 className="font-bold text-xl text-slate-900 group-hover:text-indigo-700 transition-colors leading-tight">{imovel.titulo}</h3>
       </div>
       <p className="text-2xl font-black text-slate-900 mb-2">
         {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(imovel.preco)}
@@ -30,6 +30,10 @@ const ImovelCard = ({ imovel, usuario, onEdit, onDelete, onSell }) => (
       <p className="text-slate-400 text-sm font-medium flex items-center gap-1.5 mb-8">
         <MapPin size={16} className="text-indigo-500" /> {imovel.localizacao}
       </p>
+
+      {imovel.comissao && (
+        <div className="mb-4 p-3 bg-indigo-50 rounded-xl border border-indigo-100 text-indigo-700 text-xs font-bold uppercase tracking-wider text-center">Comissão: {imovel.comissao}%</div>
+      )}
       
       <div className="flex flex-col gap-2">
         <a href={`https://wa.me/${imovel.contato}`} target="_blank" rel="noreferrer" className="bg-emerald-500 text-white p-4 rounded-2xl flex justify-center items-center gap-3 font-bold hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-50 active:scale-[0.98]">
@@ -68,10 +72,10 @@ function App() {
   const [aceitouTermos, setAceitouTermos] = useState(false);
   
   // Estados para Cadastro de Usuário (Leads)
-  const [dadosAuth, setDadosAuth] = useState({ nome: "", email: "", cpf: "", telefone: "", senha: "" });
+  const [dadosAuth, setDadosAuth] = useState({ nome: "", email: "", cpf: "", creci: "", telefone: "", senha: "" });
 
   // Estados para o Imóvel
-  const [novoImovel, setNovoImovel] = useState({ titulo: "", preco: "", localizacao: "", contato: "", tipo: "venda", anuncianteTipo: "vendedor", imagemUrl: "" });
+  const [novoImovel, setNovoImovel] = useState({ titulo: "", preco: "", localizacao: "", contato: "", tipoNegocio: "venda", tipoImovel: "casa", comissao: "", imagemUrl: "" });
   const [fotoArquivo, setFotoArquivo] = useState(null);
   const localizacaoRef = useRef(null);
 
@@ -151,7 +155,7 @@ function App() {
       }
 
       setSelecionadoParaEdicao(null);
-      setNovoImovel({ titulo: "", preco: "", localizacao: "", contato: "", tipo: "venda", anuncianteTipo: "vendedor", imagemUrl: "" });
+      setNovoImovel({ titulo: "", preco: "", localizacao: "", contato: "", tipoNegocio: "venda", tipoImovel: "casa", comissao: "", imagemUrl: "" });
       setFotoArquivo(null);
       setModo("buscar");
       carregarImoveis();
@@ -188,7 +192,7 @@ function App() {
 
   const filtrados = imoveis.filter(i => {
     const matchBusca = i.titulo?.toLowerCase().includes(busca.toLowerCase()) || i.localizacao?.toLowerCase().includes(busca.toLowerCase());
-    const matchAba = abaAtiva === "todos" || i.tipo === abaAtiva;
+    const matchAba = abaAtiva === "todos" || i.tipoNegocio === abaAtiva;
     return matchBusca && matchAba;
   });
 
@@ -215,6 +219,8 @@ function App() {
                     onChange={e => setDadosAuth({...dadosAuth, nome: e.target.value})} />
                   <input required placeholder="CPF (Apenas números)" className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
                     onChange={e => setDadosAuth({...dadosAuth, cpf: e.target.value})} />
+                  <input placeholder="Número do CRECI (Opcional)" className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
+                    onChange={e => setDadosAuth({...dadosAuth, creci: e.target.value})} />
                   <input required placeholder="WhatsApp (DDD + Número)" className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
                     onChange={e => setDadosAuth({...dadosAuth, telefone: e.target.value})} />
                 </>
@@ -257,7 +263,7 @@ function App() {
             <div className="bg-indigo-600 text-white p-2.5 rounded-2xl group-hover:rotate-12 transition-transform shadow-lg shadow-indigo-100">
               <Home size={28} strokeWidth={2.5} />
             </div>
-            <div>
+              <div className="hidden sm:block">
               <h1 className="text-2xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-700 to-blue-600">Imóvel Pro</h1>
               {usuario && <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em]">Olá, {usuario.nome.split(' ')[0]}</p>}
             </div>
@@ -305,6 +311,31 @@ function App() {
           </button>
         </div>
 
+        {/* BENTO GRID DE RECURSOS (Aparece apenas no modo buscar) */}
+        {modo === "buscar" && (
+          <section className="mb-20 grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="md:col-span-2 bg-gradient-to-br from-indigo-600 to-blue-700 p-8 rounded-[2.5rem] text-white flex flex-col justify-between overflow-hidden relative group">
+              <Zap className="absolute right-[-20px] top-[-20px] w-64 h-64 text-white/10 group-hover:scale-110 transition-transform duration-700" />
+              <div className="relative">
+                <div className="bg-white/20 w-fit p-3 rounded-2xl mb-6 backdrop-blur-md"><Users size={24} /></div>
+                <h3 className="text-3xl font-black mb-4">Sistema de Match</h3>
+                <p className="text-indigo-100 max-w-md font-medium">Conectamos corretores com clientes aos corretores com imóveis. Aceleramos sua venda em até 3x.</p>
+              </div>
+              <button className="bg-white text-indigo-600 w-fit px-8 py-3 rounded-xl font-bold mt-8 hover:bg-indigo-50 transition-colors">Ver Oportunidades</button>
+            </div>
+            <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col justify-between">
+              <div className="bg-indigo-50 w-fit p-3 rounded-2xl mb-6 text-indigo-600"><BarChart3 size={24} /></div>
+              <h3 className="text-2xl font-black text-slate-900 mb-2">Gestão de Leads</h3>
+              <p className="text-slate-500 font-medium">Acompanhe quem visualizou seus imóveis em tempo real.</p>
+            </div>
+            <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col justify-between">
+              <div className="bg-emerald-50 w-fit p-3 rounded-2xl mb-6 text-emerald-600"><ShieldCheck size={24} /></div>
+              <h3 className="text-2xl font-black text-slate-900 mb-2">Perfis Verificados</h3>
+              <p className="text-slate-500 font-medium">Segurança total com verificação de CRECI obrigatória.</p>
+            </div>
+          </section>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-12">
         {/* COLUNA DO FORMULÁRIO */}
         <section className={`lg:col-span-1 ${modo === "anunciar" ? "block" : "hidden"}`}>
@@ -320,8 +351,8 @@ function App() {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Tipo</label>
-                <select className="w-full p-4 bg-slate-50 rounded-2xl border-none focus:ring-2 focus:ring-indigo-500 transition-all appearance-none" value={novoImovel.tipo} onChange={e => setNovoImovel({...novoImovel, tipo: e.target.value})}>
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Finalidade</label>
+                <select className="w-full p-4 bg-slate-50 rounded-2xl border-none focus:ring-2 focus:ring-indigo-500 transition-all appearance-none font-bold text-slate-700" value={novoImovel.tipoNegocio} onChange={e => setNovoImovel({...novoImovel, tipoNegocio: e.target.value})}>
                   <option value="venda">Venda</option>
                   <option value="aluguel">Aluguel</option>
                 </select>
@@ -329,6 +360,21 @@ function App() {
               <div className="space-y-2">
                 <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Preço</label>
                 <input required type="number" className="w-full p-4 bg-slate-50 rounded-2xl border-none focus:ring-2 focus:ring-indigo-500 transition-all" value={novoImovel.preco} onChange={e => setNovoImovel({...novoImovel, preco: e.target.value})} />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Tipo Imóvel</label>
+                <select className="w-full p-4 bg-slate-50 rounded-2xl border-none focus:ring-2 focus:ring-indigo-500 transition-all appearance-none font-bold text-slate-700" value={novoImovel.tipoImovel} onChange={e => setNovoImovel({...novoImovel, tipoImovel: e.target.value})}>
+                  <option value="casa">Casa</option>
+                  <option value="apto">Apartamento</option>
+                  <option value="terreno">Terreno</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Comissão %</label>
+                <input type="number" placeholder="Ex: 6" className="w-full p-4 bg-slate-50 rounded-2xl border-none focus:ring-2 focus:ring-indigo-500 transition-all" value={novoImovel.comissao} onChange={e => setNovoImovel({...novoImovel, comissao: e.target.value})} />
               </div>
             </div>
 

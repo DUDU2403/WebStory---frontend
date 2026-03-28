@@ -1,19 +1,15 @@
 @import "tailwindcss";
 
 * {
-  font-family: Arial, Helvetica, 'Liberation Sans', 'Nimbus Sans L', 'Trebuchet MS', sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-/* Títulos com Arial Negrito */
-h1, h2, h3, h4, h5, h6 {
-  font-family: Arial, Helvetica, 'Liberation Sans', 'Nimbus Sans L', 'Trebuchet MS', sans-serif;
 }
 
 /* Suavidade de fontes */
 body {
   text-rendering: optimizeLegibility;
   font-feature-settings: "kern" 1;
-  letter-spacing: 0.2px;
+  letter-spacing: -0.01em;
+  @apply bg-slate-50 text-slate-900;
 }

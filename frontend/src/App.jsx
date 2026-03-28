@@ -7,11 +7,11 @@ const API_URL = "https://meu-imovel-api.onrender.com";
 
 // Componente de Card extraído para melhor organização e performance
 const ImovelCard = ({ imovel, usuario, onEdit, onDelete, onSell }) => (
-  <div className="group bg-white rounded-[2rem] overflow-hidden shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 border border-slate-100">
+  <div className="group bg-white rounded-[2.5rem] overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_50px_rgba(79,70,229,0.15)] hover:-translate-y-2 transition-all duration-500 border border-slate-100">
     <div className="relative h-64 overflow-hidden">
       <img src={imovel.imagemUrl} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt={imovel.titulo} />
       {imovel.status === 'vendido' && (
-        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center">
+        <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center">
           <span className="bg-white text-slate-900 px-6 py-2 rounded-full font-black uppercase tracking-widest">Vendido</span>
         </div>
       )}
@@ -31,9 +31,12 @@ const ImovelCard = ({ imovel, usuario, onEdit, onDelete, onSell }) => (
         <MapPin size={16} className="text-indigo-500" /> {imovel.localizacao}
       </p>
 
-      {imovel.comissao && (
-        <div className="mb-4 p-3 bg-indigo-50 rounded-xl border border-indigo-100 text-indigo-700 text-xs font-bold uppercase tracking-wider text-center">Comissão: {imovel.comissao}%</div>
-      )}
+      <div className="flex items-center gap-2 mb-6">
+        <span className="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-[10px] font-bold uppercase tracking-tighter">{imovel.tipoImovel}</span>
+        {imovel.comissao && (
+          <span className="px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full text-[10px] font-bold uppercase tracking-tighter">Parceria: {imovel.comissao}%</span>
+        )}
+      </div>
       
       <div className="flex flex-col gap-2">
         <a href={`https://wa.me/${imovel.contato}`} target="_blank" rel="noreferrer" className="bg-emerald-500 text-white p-4 rounded-2xl flex justify-center items-center gap-3 font-bold hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-50 active:scale-[0.98]">
@@ -75,7 +78,7 @@ function App() {
   const [dadosAuth, setDadosAuth] = useState({ nome: "", email: "", cpf: "", creci: "", telefone: "", senha: "" });
 
   // Estados para o Imóvel
-  const [novoImovel, setNovoImovel] = useState({ titulo: "", preco: "", localizacao: "", contato: "", tipoNegocio: "venda", tipoImovel: "casa", comissao: "", imagemUrl: "" });
+  const [novoImovel, setNovoImovel] = useState({ titulo: "", preco: "", localizacao: "", contato: "", tipoNegocio: "venda", tipoImovel: "casa", comissao: "6", imagemUrl: "" });
   const [fotoArquivo, setFotoArquivo] = useState(null);
   const localizacaoRef = useRef(null);
 
@@ -219,7 +222,7 @@ function App() {
                     onChange={e => setDadosAuth({...dadosAuth, nome: e.target.value})} />
                   <input required placeholder="CPF (Apenas números)" className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
                     onChange={e => setDadosAuth({...dadosAuth, cpf: e.target.value})} />
-                  <input placeholder="Número do CRECI (Opcional)" className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
+                  <input required placeholder="Número do CRECI" className="w-full p-4 bg-slate-50 border border-indigo-100 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
                     onChange={e => setDadosAuth({...dadosAuth, creci: e.target.value})} />
                   <input required placeholder="WhatsApp (DDD + Número)" className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
                     onChange={e => setDadosAuth({...dadosAuth, telefone: e.target.value})} />
@@ -263,7 +266,7 @@ function App() {
             <div className="bg-indigo-600 text-white p-2.5 rounded-2xl group-hover:rotate-12 transition-transform shadow-lg shadow-indigo-100">
               <Home size={28} strokeWidth={2.5} />
             </div>
-              <div className="hidden sm:block">
+              <div className="block">
               <h1 className="text-2xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-700 to-blue-600">Imóvel Pro</h1>
               {usuario && <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em]">Olá, {usuario.nome.split(' ')[0]}</p>}
             </div>
@@ -314,12 +317,12 @@ function App() {
         {/* BENTO GRID DE RECURSOS (Aparece apenas no modo buscar) */}
         {modo === "buscar" && (
           <section className="mb-20 grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="md:col-span-2 bg-gradient-to-br from-indigo-600 to-blue-700 p-8 rounded-[2.5rem] text-white flex flex-col justify-between overflow-hidden relative group">
+            <div className="md:col-span-2 bg-gradient-to-br from-indigo-600 to-indigo-900 p-10 rounded-[3rem] text-white flex flex-col justify-between overflow-hidden relative group border border-indigo-400/20">
               <Zap className="absolute right-[-20px] top-[-20px] w-64 h-64 text-white/10 group-hover:scale-110 transition-transform duration-700" />
               <div className="relative">
                 <div className="bg-white/20 w-fit p-3 rounded-2xl mb-6 backdrop-blur-md"><Users size={24} /></div>
-                <h3 className="text-3xl font-black mb-4">Sistema de Match</h3>
-                <p className="text-indigo-100 max-w-md font-medium">Conectamos corretores com clientes aos corretores com imóveis. Aceleramos sua venda em até 3x.</p>
+                <h3 className="text-4xl font-black mb-4 tracking-tighter">Sistema de Match</h3>
+                <p className="text-indigo-100 max-w-md text-lg font-medium leading-relaxed">Conectamos o corretor que tem o cliente ao que tem o imóvel. Ganhe agilidade e divida comissões com segurança.</p>
               </div>
               <button className="bg-white text-indigo-600 w-fit px-8 py-3 rounded-xl font-bold mt-8 hover:bg-indigo-50 transition-colors">Ver Oportunidades</button>
             </div>

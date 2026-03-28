@@ -71,7 +71,7 @@ function App() {
       // 1. Upload para o Cloudinary
       const formData = new FormData();
       formData.append("file", fotoArquivo);
-      formData.append("upload_preset", meu_imovel);
+      formData.append("upload_preset", 'meu_imovel');
 
       const resCloud = await axios.post(
         `https://api.cloudinary.com/v1_1/dolazq2mw/image/upload`,

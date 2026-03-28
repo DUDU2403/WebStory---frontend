@@ -4,6 +4,47 @@ import { Home, MapPin, Search, PlusCircle, Trash2, MessageCircle, Camera, Loader
 
 const API_URL = "https://meu-imovel-api.onrender.com";
 
+// Componente de Card extraído para melhor organização e performance
+const ImovelCard = ({ imovel, usuario, onEdit, onDelete }) => (
+  <div className="group bg-white rounded-[2rem] overflow-hidden shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 border border-slate-100">
+    <div className="relative h-64 overflow-hidden">
+      <img src={imovel.imagemUrl} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt={imovel.titulo} />
+      <div className={`absolute top-4 left-4 ${imovel.tipo === 'venda' ? 'bg-indigo-600' : 'bg-amber-500'} text-white px-4 py-1.5 rounded-xl font-bold text-[10px] tracking-widest uppercase shadow-lg`}>
+        {imovel.tipo.toUpperCase()}
+      </div>
+    </div>
+    
+    <div className="p-7">
+      <div className="flex justify-between items-start mb-4">
+        <h3 className="font-bold text-xl text-slate-900 group-hover:text-indigo-600 transition-colors leading-tight">{imovel.titulo}</h3>
+      </div>
+      <p className="text-2xl font-black text-slate-900 mb-2">
+        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(imovel.preco)}
+      </p>
+      <p className="text-slate-400 text-sm font-medium flex items-center gap-1.5 mb-8">
+        <MapPin size={16} className="text-indigo-500" /> {imovel.localizacao}
+      </p>
+      
+      <div className="flex flex-col gap-2">
+        <a href={`https://wa.me/${imovel.contato}`} target="_blank" rel="noreferrer" className="bg-emerald-500 text-white p-4 rounded-2xl flex justify-center items-center gap-3 font-bold hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-50 active:scale-[0.98]">
+          <MessageCircle size={20} /> Falar com anunciante
+        </a>
+        
+        {usuario && imovel.criadoPor?._id === usuario.id && (
+          <div className="flex gap-2 mt-2">
+            <button onClick={() => onEdit(imovel)} className="flex-1 bg-slate-50 text-slate-500 p-3 rounded-xl font-bold text-[10px] tracking-widest hover:bg-indigo-50 hover:text-indigo-600 transition-all">
+              EDITAR
+            </button>
+            <button onClick={() => onDelete(imovel._id)} className="flex-1 bg-slate-50 text-slate-500 p-3 rounded-xl font-bold text-[10px] tracking-widest hover:bg-red-50 hover:text-red-500 transition-all">
+              APAGAR
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+);
+
 function App() {
   const [imoveis, setImoveis] = useState([]);
   const [busca, setBusca] = useState("");
@@ -128,39 +169,39 @@ function App() {
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+    <div className="min-h-screen bg-[#f8fafc] text-slate-900 selection:bg-indigo-100 selection:text-indigo-700 font-sans">
       
       {/* MODAL DE LOGIN/CADASTRO */}
       {mostrarAuth && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
-            <div className="p-6 bg-indigo-600 text-white flex justify-between items-center">
-              <h2 className="text-xl font-black uppercase tracking-widest">
+        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
+          <div className="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 border border-white/20">
+            <div className="p-8 bg-gradient-to-br from-indigo-600 to-blue-700 text-white flex justify-between items-center">
+              <h2 className="text-2xl font-bold tracking-tight">
                 {authModo === "login" ? "Acesse sua conta" : "Seja um anunciante"}
               </h2>
-              <button onClick={() => setMostrarAuth(false)}><X size={24} /></button>
+              <button onClick={() => setMostrarAuth(false)} className="hover:rotate-90 transition-transform"><X size={28} /></button>
             </div>
-            <form onSubmit={manipularAuth} className="p-8 space-y-4">
+            <form onSubmit={manipularAuth} className="p-10 space-y-5">
               {authModo === "cadastro" && (
                 <>
-                  <input required placeholder="Nome Completo" className="w-full p-3 border-2 border-indigo-100 rounded-xl outline-none focus:border-indigo-500"
+                  <input required placeholder="Nome Completo" className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
                     onChange={e => setDadosAuth({...dadosAuth, nome: e.target.value})} />
-                  <input required placeholder="CPF (Apenas números)" className="w-full p-3 border-2 border-indigo-100 rounded-xl outline-none focus:border-indigo-500"
+                  <input required placeholder="CPF (Apenas números)" className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
                     onChange={e => setDadosAuth({...dadosAuth, cpf: e.target.value})} />
-                  <input required placeholder="WhatsApp (DDD + Número)" className="w-full p-3 border-2 border-indigo-100 rounded-xl outline-none focus:border-indigo-500"
+                  <input required placeholder="WhatsApp (DDD + Número)" className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
                     onChange={e => setDadosAuth({...dadosAuth, telefone: e.target.value})} />
                 </>
               )}
-              <input required type="email" placeholder="Seu E-mail" className="w-full p-3 border-2 border-indigo-100 rounded-xl outline-none focus:border-indigo-500"
+              <input required type="email" placeholder="Seu E-mail" className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
                 onChange={e => setDadosAuth({...dadosAuth, email: e.target.value})} />
-              <input required type="password" placeholder="Sua Senha" className="w-full p-3 border-2 border-indigo-100 rounded-xl outline-none focus:border-indigo-500"
+              <input required type="password" placeholder="Sua Senha" className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
                 onChange={e => setDadosAuth({...dadosAuth, senha: e.target.value})} />
               
-              <button disabled={carregando} className="w-full bg-indigo-600 text-white p-4 rounded-xl font-black hover:bg-indigo-700 transition-all flex justify-center">
+              <button disabled={carregando} className="w-full bg-indigo-600 text-white p-5 rounded-2xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all flex justify-center active:scale-[0.98]">
                 {carregando ? <Loader2 className="animate-spin" /> : (authModo === "login" ? "ENTRAR" : "CRIAR CONTA")}
               </button>
               
-              <button type="button" onClick={() => setAuthModo(authModo === "login" ? "cadastro" : "login")} className="w-full text-indigo-600 font-bold text-sm">
+              <button type="button" onClick={() => setAuthModo(authModo === "login" ? "cadastro" : "login")} className="w-full text-slate-500 font-semibold text-sm hover:text-indigo-600 transition-colors">
                 {authModo === "login" ? "Não tem conta? Cadastre-se aqui" : "Já tem conta? Faça Login"}
               </button>
             </form>
@@ -169,81 +210,106 @@ function App() {
       )}
 
       {/* HEADER */}
-      <header className="bg-gradient-to-r from-indigo-600 via-blue-600 to-blue-700 text-white p-6 shadow-2xl flex flex-col md:flex-row justify-between items-center gap-6 sticky top-0 z-50 border-b-4 border-indigo-400">
-        <div className="flex items-center gap-3">
-          <div className="bg-white/20 backdrop-blur p-3 rounded-2xl"><Home size={32} /></div>
-          <div>
-            <h1 className="text-4xl font-black tracking-tighter uppercase">Imóvel Pro</h1>
-            {usuario && <p className="text-xs text-blue-200 font-bold uppercase tracking-widest">Olá, {usuario.nome}</p>}
+      <header className="sticky top-0 z-50 px-6 py-4">
+        <nav className="max-w-7xl mx-auto bg-white/80 backdrop-blur-xl border border-white/40 shadow-sm rounded-[2rem] px-6 py-3 flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="flex items-center gap-3 group cursor-pointer">
+            <div className="bg-indigo-600 text-white p-2.5 rounded-2xl group-hover:rotate-12 transition-transform shadow-lg shadow-indigo-100">
+              <Home size={28} strokeWidth={2.5} />
+            </div>
+            <div>
+              <h1 className="text-2xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-700 to-blue-600">Imóvel Pro</h1>
+              {usuario && <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em]">Olá, {usuario.nome.split(' ')[0]}</p>}
+            </div>
           </div>
-        </div>
-        <div className="relative w-full md:w-96">
-          <Search className="absolute left-4 top-3.5 text-blue-100" size={20} />
-          <input placeholder="Buscar por cidade, bairro..." className="w-full pl-12 pr-5 py-3 rounded-full text-slate-800 font-medium focus:ring-4 focus:ring-blue-300 outline-none transition-all shadow-xl bg-white/95" onChange={e => setBusca(e.target.value)} />
-        </div>
-        <div className="flex gap-2">
-          {usuario ? (
-            <button onClick={logout} className="bg-red-500/20 hover:bg-red-500 p-3 rounded-full transition-all flex items-center gap-2 font-bold text-xs"><LogOut size={18}/> SAIR</button>
-          ) : (
-            <button onClick={() => {setAuthModo("login"); setMostrarAuth(true)}} className="bg-white/20 hover:bg-white/40 p-3 rounded-full transition-all flex items-center gap-2 font-bold text-xs uppercase"><LogIn size={18}/> Entrar</button>
-          )}
-        </div>
+
+          <div className="relative w-full md:max-w-md group">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" size={18} />
+            <input 
+              placeholder="Onde você quer morar?" 
+              className="w-full pl-12 pr-6 py-3.5 bg-slate-50 border-none rounded-2xl text-slate-700 font-medium focus:ring-2 focus:ring-indigo-500/20 focus:bg-white outline-none transition-all placeholder:text-slate-400" 
+              onChange={e => setBusca(e.target.value)} 
+            />
+          </div>
+
+          <div className="flex items-center gap-3">
+            {usuario ? (
+              <button onClick={logout} className="flex items-center gap-2 px-5 py-3 bg-red-50 text-red-600 rounded-2xl font-bold text-xs hover:bg-red-100 transition-colors uppercase tracking-wider">
+                <LogOut size={16}/> Sair
+              </button>
+            ) : (
+              <button onClick={() => {setAuthModo("login"); setMostrarAuth(true)}} className="flex items-center gap-2 px-6 py-3.5 bg-slate-900 text-white rounded-2xl font-bold text-xs hover:bg-indigo-600 transition-all shadow-lg shadow-slate-200 uppercase tracking-widest">
+                <LogIn size={16}/> Entrar
+              </button>
+            )}
+          </div>
+        </nav>
       </header>
 
-      <main className="px-6 py-10 grid grid-cols-1 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
-        <div className="lg:col-span-4 flex gap-3 mb-8 justify-center md:justify-start">
-          <button onClick={() => setModo("buscar")} className={`px-6 py-2 font-bold rounded-full transition-all ${modo === "buscar" ? "bg-indigo-700 text-white shadow-lg" : "bg-white text-slate-700 border border-indigo-200"}`}>🔎 Buscar imóveis</button>
+      <main className="px-6 py-12 max-w-7xl mx-auto">
+        {/* HERO SECTION MINI */}
+        <div className="text-center mb-16 space-y-4">
+          <h2 className="text-5xl md:text-6xl font-black text-slate-900 tracking-tight leading-tight">Encontre o lugar que<br/><span className="text-indigo-600">combina com você.</span></h2>
+          <p className="text-slate-500 text-lg font-medium max-w-2xl mx-auto">A plataforma mais moderna para encontrar seu próximo lar ou investir no mercado imobiliário com segurança.</p>
+        </div>
+
+        <div className="flex gap-4 mb-12 justify-center">
+          <button onClick={() => setModo("buscar")} className={`px-8 py-4 font-bold rounded-2xl transition-all flex items-center gap-3 ${modo === "buscar" ? "bg-indigo-600 text-white shadow-2xl shadow-indigo-200 scale-105" : "bg-white text-slate-600 hover:bg-slate-50"}`}>
+            <Search size={20} /> Buscar imóveis
+          </button>
           <button onClick={() => {
             if(!usuario) { setAuthModo("cadastro"); setMostrarAuth(true); }
             else { setModo("anunciar"); }
-          }} className={`px-6 py-2 font-bold rounded-full transition-all ${modo === "anunciar" ? "bg-green-700 text-white shadow-lg" : "bg-white text-slate-700 border border-green-200"}`}>🏠 Anunciar imóvel</button>
+          }} className={`px-8 py-4 font-bold rounded-2xl transition-all flex items-center gap-3 ${modo === "anunciar" ? "bg-emerald-600 text-white shadow-2xl shadow-emerald-200 scale-105" : "bg-white text-slate-600 hover:bg-slate-50"}`}>
+            <PlusCircle size={20} /> Anunciar imóvel
+          </button>
         </div>
 
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-12">
         {/* COLUNA DO FORMULÁRIO */}
         <section className={`lg:col-span-1 ${modo === "anunciar" ? "block" : "hidden"}`}>
-          <form onSubmit={cadastrar} className="bg-white p-8 rounded-3xl shadow-2xl border-2 border-indigo-100 space-y-6 sticky top-28">
-            <h2 className="text-2xl font-black text-indigo-700 border-b-3 border-indigo-200 pb-4">
+          <form onSubmit={cadastrar} className="bg-white p-10 rounded-[2.5rem] shadow-xl border border-slate-100 space-y-8 sticky top-32">
+            <h2 className="text-2xl font-bold text-slate-900">
               {selecionadoParaEdicao ? "Editar Anúncio" : "Novo Anúncio"}
             </h2>
             
             <div className="space-y-2">
-              <label className="text-xs font-black text-slate-700 uppercase">📝 Título</label>
-              <input required className="w-full p-3 bg-slate-50 rounded-2xl border-2 border-indigo-200" value={novoImovel.titulo} onChange={e => setNovoImovel({...novoImovel, titulo: e.target.value})} />
+              <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Título</label>
+              <input required className="w-full p-4 bg-slate-50 rounded-2xl border-none focus:ring-2 focus:ring-indigo-500 transition-all" value={novoImovel.titulo} onChange={e => setNovoImovel({...novoImovel, titulo: e.target.value})} />
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-xs font-black text-slate-700 uppercase">🏷️ Tipo</label>
-                <select className="w-full p-3 bg-slate-50 rounded-2xl border-2 border-indigo-200" value={novoImovel.tipo} onChange={e => setNovoImovel({...novoImovel, tipo: e.target.value})}>
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Tipo</label>
+                <select className="w-full p-4 bg-slate-50 rounded-2xl border-none focus:ring-2 focus:ring-indigo-500 transition-all appearance-none" value={novoImovel.tipo} onChange={e => setNovoImovel({...novoImovel, tipo: e.target.value})}>
                   <option value="venda">Venda</option>
                   <option value="aluguel">Aluguel</option>
                 </select>
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-black text-slate-700 uppercase">💰 Preço</label>
-                <input required type="number" className="w-full p-3 bg-slate-50 rounded-2xl border-2 border-indigo-200" value={novoImovel.preco} onChange={e => setNovoImovel({...novoImovel, preco: e.target.value})} />
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Preço</label>
+                <input required type="number" className="w-full p-4 bg-slate-50 rounded-2xl border-none focus:ring-2 focus:ring-indigo-500 transition-all" value={novoImovel.preco} onChange={e => setNovoImovel({...novoImovel, preco: e.target.value})} />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-black text-slate-700 uppercase">📸 Foto</label>
-              <div className="relative w-full h-32 border-3 border-dashed border-indigo-300 rounded-2xl flex flex-col items-center justify-center bg-indigo-50 overflow-hidden">
+              <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Foto do Imóvel</label>
+              <div className="relative w-full h-40 border-2 border-dashed border-slate-200 rounded-3xl flex flex-col items-center justify-center bg-slate-50 overflow-hidden hover:bg-slate-100 transition-colors cursor-pointer group">
                 {fotoArquivo ? <img src={URL.createObjectURL(fotoArquivo)} className="w-full h-full object-cover" /> : <Camera size={32} className="text-indigo-400" />}
                 <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" onChange={e => setFotoArquivo(e.target.files[0])} />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-black text-slate-700 uppercase">📍 Endereço</label>
-              <input required className="w-full p-3 bg-slate-50 rounded-2xl border-2 border-indigo-200" value={novoImovel.localizacao} onChange={e => setNovoImovel({...novoImovel, localizacao: e.target.value})} />
+              <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Localização</label>
+              <input required className="w-full p-4 bg-slate-50 rounded-2xl border-none focus:ring-2 focus:ring-indigo-500 transition-all" value={novoImovel.localizacao} onChange={e => setNovoImovel({...novoImovel, localizacao: e.target.value})} />
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-black text-slate-700 uppercase">📱 WhatsApp para contato</label>
-              <input required placeholder="119..." className="w-full p-3 bg-slate-50 rounded-2xl border-2 border-indigo-200" value={novoImovel.contato} onChange={e => setNovoImovel({...novoImovel, contato: e.target.value})} />
+              <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">WhatsApp</label>
+              <input required placeholder="119..." className="w-full p-4 bg-slate-50 rounded-2xl border-none focus:ring-2 focus:ring-indigo-500 transition-all" value={novoImovel.contato} onChange={e => setNovoImovel({...novoImovel, contato: e.target.value})} />
             </div>
 
-            <button disabled={carregando} className="w-full p-4 rounded-2xl font-black text-white bg-indigo-600 shadow-xl uppercase transition-all">
+            <button disabled={carregando} className="w-full p-5 rounded-2xl font-bold text-white bg-indigo-600 shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all active:scale-[0.98]">
               {carregando ? <Loader2 className="animate-spin inline" /> : "Publicar Agora"}
             </button>
           </form>
@@ -251,9 +317,9 @@ function App() {
 
         {/* VITRINE DE IMÓVEIS */}
         <section className={`lg:col-span-3 ${modo === "anunciar" ? "hidden" : "block"}`}>
-          <div className="flex gap-2 mb-8 sticky top-24 bg-slate-50/80 backdrop-blur z-10 py-4">
+          <div className="flex gap-3 mb-10 overflow-x-auto pb-4 no-scrollbar">
             {["todos", "venda", "aluguel"].map(tipo => (
-              <button key={tipo} onClick={() => setAbaAtiva(tipo)} className={`px-5 py-2 font-black rounded-xl uppercase text-xs transition-all ${abaAtiva === tipo ? "bg-indigo-600 text-white shadow-md" : "bg-white text-slate-600 border border-indigo-100"}`}>
+              <button key={tipo} onClick={() => setAbaAtiva(tipo)} className={`px-8 py-3 rounded-2xl font-bold uppercase text-[10px] tracking-widest transition-all whitespace-nowrap ${abaAtiva === tipo ? "bg-indigo-600 text-white shadow-lg shadow-indigo-100" : "bg-white text-slate-400 hover:text-slate-600 border border-slate-100"}`}>
                 {tipo}
               </button>
             ))}
@@ -261,42 +327,22 @@ function App() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {filtrados.map(imovel => (
-              <div key={imovel._id} className="bg-white rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all border border-indigo-50">
-                <div className="relative h-48">
-                  <img src={imovel.imagemUrl} className="w-full h-full object-cover" alt="imovel" />
-                  <div className={`absolute top-3 right-3 ${imovel.tipo === 'venda' ? 'bg-green-500' : 'bg-amber-500'} text-white px-3 py-1 rounded-full font-black text-[10px]`}>
-                    {imovel.tipo.toUpperCase()}
-                  </div>
-                </div>
-                
-                <div className="p-5">
-                  <p className="text-2xl font-black text-indigo-700">R$ {Number(imovel.preco).toLocaleString('pt-BR')}</p>
-                  <h3 className="font-bold text-lg text-slate-800 truncate">{imovel.titulo}</h3>
-                  <p className="text-slate-500 text-xs flex items-center gap-1 mb-4"><MapPin size={14} /> {imovel.localizacao}</p>
-                  
-                  <div className="flex flex-col gap-2">
-                    <a href={`https://wa.me/${imovel.contato}`} target="_blank" rel="noreferrer" className="bg-green-500 text-white p-3 rounded-xl flex justify-center items-center gap-2 font-bold hover:bg-green-600 transition-all">
-                      <MessageCircle size={18} /> Ver Contato
-                    </a>
-                    
-                    {/* SÓ MOSTRA EDITAR/EXCLUIR SE FOR O DONO */}
-                    {usuario && imovel.criadoPor?._id === usuario.id && (
-                      <div className="flex gap-2 border-t pt-2 mt-2">
-                        <button onClick={() => {
-                          setSelecionadoParaEdicao(imovel._id);
-                          setNovoImovel({...imovel});
-                          setModo("anunciar");
-                          window.scrollTo({ top: 0, behavior: 'smooth' });
-                        }} className="flex-1 bg-slate-100 text-slate-600 p-2 rounded-xl font-bold text-xs hover:bg-indigo-50">✏️ EDITAR</button>
-                        <button onClick={() => excluir(imovel._id)} className="flex-1 bg-slate-100 text-red-400 p-2 rounded-xl font-bold text-xs hover:bg-red-50">🗑️ APAGAR</button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
+              <ImovelCard 
+                key={imovel._id} 
+                imovel={imovel} 
+                usuario={usuario} 
+                onDelete={excluir}
+                onEdit={(imovel) => {
+                  setSelecionadoParaEdicao(imovel._id);
+                  setNovoImovel({...imovel});
+                  setModo("anunciar");
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+              />
             ))}
           </div>
         </section>
+        </div>
       </main>
     </div>
   );

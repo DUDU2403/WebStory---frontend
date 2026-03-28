@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const bcrypt = require('bcryptjs'); // Instale: npm install bcryptjs
 const jwt = require('jsonwebtoken'); // Instale: npm install jsonwebtoken
+const axios = require('axios'); // Instale: npm install axios
 require('dotenv').config();
 
 const app = express();
@@ -64,6 +65,22 @@ const auth = (req, res, next) => {
   }
 };
 
+// --- INTEGRAÇÃO GOOGLE SHEETS (LEADS) ---
+const enviarParaGoogleSheets = async (dados) => {
+  const webhookUrl = process.env.GOOGLE_SHEETS_WEBHOOK;
+  if (!webhookUrl) {
+    console.log("⚠️ GOOGLE_SHEETS_WEBHOOK não configurado no arquivo .env");
+    return;
+  }
+
+  try {
+    await axios.post(webhookUrl, dados);
+    console.log("✅ Lead enviado com sucesso para o Google Sheets!");
+  } catch (err) {
+    console.error("❌ Erro ao enviar lead para o Webhook:", err.message);
+  }
+};
+
 // --- ROTAS DE USUÁRIOS (AUTH) ---
 
 // Cadastro de Leads
@@ -79,6 +96,9 @@ app.post('/auth/register', async (req, res) => {
 
     user = new User({ nome, email, cpf, telefone, senha: senhaHashed });
     await user.save();
+
+    // Envio automático dos dados para a planilha via Webhook
+    enviarParaGoogleSheets({ nome, email, cpf, telefone });
 
     res.json({ message: "Cadastro realizado com sucesso!" });
   } catch (err) {

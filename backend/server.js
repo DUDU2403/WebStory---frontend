@@ -43,6 +43,8 @@ const User = mongoose.model('User', new mongoose.Schema({
   creci: { type: String }, // Registro profissional do corretor
   telefone: { type: String, required: true },
   senha: { type: String, required: true },
+  isSubscriptionActive: { type: Boolean, default: false },
+  subscriptionExpires: { type: Date },
   createdAt: { type: Date, default: Date.now }
 }));
 
@@ -139,7 +141,7 @@ app.post('/auth/login', async (req, res) => {
 
     // Gera o Token
     const token = jwt.sign({ id: user._id, nome: user.nome }, process.env.JWT_SECRET || 'fallback_secret_para_dev');
-    res.json({ token, user: { id: user._id, nome: user.nome } });
+    res.json({ token, user: { id: user._id, nome: user.nome, isSubscriptionActive: user.isSubscriptionActive } });
   } catch (err) {
     res.status(500).json({ message: "Erro ao fazer login." });
   }
@@ -227,6 +229,22 @@ app.post('/imoveis/:id/vender', auth, async (req, res) => {
         res.json({ message: "Venda registrada! Comissão de R$" + valorComissao + " pendente.", venda: novaVenda });
     } catch (err) {
         res.status(500).json({ message: "Erro ao registrar venda." });
+    }
+});
+
+// ROTA 6: Simular Assinatura (Pagamento)
+app.post('/auth/subscribe', auth, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+        if (!user) return res.status(404).json({ message: "Usuário não encontrado." });
+
+        user.isSubscriptionActive = true;
+        user.subscriptionExpires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // Ativa por 30 dias
+        await user.save();
+
+        res.json({ message: "Assinatura ativada!", user: { id: user._id, nome: user.nome, isSubscriptionActive: true } });
+    } catch (err) {
+        res.status(500).json({ message: "Erro ao processar assinatura." });
     }
 });
 

@@ -1,18 +1,14 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-@layer base {
-  * {
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
+/* O erro acontece quando tentamos usar @apply antes do Tailwind carregar.
+   Remova qualquer @apply que esteja nas primeiras linhas se o erro persistir. */
 
-  body {
-    @apply bg-slate-50 text-slate-900;
-    text-rendering: optimizeLegibility;
-    font-feature-settings: "kern" 1;
-    letter-spacing: -0.01em;
-  }
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+}
+
+/* Em vez de usar @apply aqui no CSS, vamos fazer o seguinte: */
+body {
+  margin: 0;
+  background-color: #f8fafc; /* Isso é o mesmo que o bg-slate-50 */
 }

@@ -13,6 +13,10 @@ app.use(cors());
 // Conexão com MongoDB
 const connectDB = async () => {
   try {
+    if (!process.env.MONGO_URI) {
+      console.error("❌ ERRO: Variável MONGO_URI não encontrada no arquivo .env");
+      return;
+    }
     await mongoose.connect(process.env.MONGO_URI);
     console.log("✅ BANCO CONECTADO");
   } catch (err) {
@@ -141,7 +145,17 @@ app.post('/auth/login', async (req, res) => {
 
     // Gera o Token
     const token = jwt.sign({ id: user._id, nome: user.nome }, process.env.JWT_SECRET || 'fallback_secret_para_dev');
-    res.json({ token, user: { id: user._id, nome: user.nome, isSubscriptionActive: user.isSubscriptionActive } });
+    
+    // Retorna os dados necessários para o frontend controlar o acesso
+    res.json({ 
+      token, 
+      user: { 
+        id: user._id, 
+        nome: user.nome, 
+        isSubscriptionActive: user.isSubscriptionActive,
+        subscriptionExpires: user.subscriptionExpires 
+      } 
+    });
   } catch (err) {
     res.status(500).json({ message: "Erro ao fazer login." });
   }
@@ -153,6 +167,31 @@ app.post('/auth/login', async (req, res) => {
 app.get('/imoveis', async (req, res) => {
     const imoveis = await Imovel.find().populate('criadoPor', 'nome email');
     res.json(imoveis);
+});
+
+// ROTA: Buscar Oportunidades de Match (Exclusivo para Assinantes)
+app.get('/imoveis/matches', auth, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+        
+        // Verifica se a assinatura está ativa e não expirou
+        const hoje = new Date();
+        if (!user.isSubscriptionActive || (user.subscriptionExpires && user.subscriptionExpires < hoje)) {
+            // Se expirou, atualiza o status no banco
+            if (user.isSubscriptionActive) {
+                user.isSubscriptionActive = false;
+                await user.save();
+            }
+            return res.status(403).json({ message: "Assinatura inativa ou expirada. Ative o Match Pro para acessar." });
+        }
+
+        // Busca imóveis com comissão (parceria) de outros corretores
+        const matches = await Imovel.find({ comissao: { $gt: 0 }, criadoPor: { $ne: req.user.id } })
+            .populate('criadoPor', 'nome email telefone creci');
+        res.json(matches);
+    } catch (err) {
+        res.status(500).json({ message: "Erro ao carregar matches." });
+    }
 });
 
 // ROTA 2: Criar novo (Protegido: Precisa estar logado)

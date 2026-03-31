@@ -4,7 +4,8 @@ import { Home, MapPin, Search, PlusCircle, Trash2, MessageCircle, Camera, Loader
 import PrivacyPolicy from './PrivacyPolicy';
 
 // Dica: Use localhost se estiver testando localmente, ou a URL do seu deploy
-const API_URL = import.meta.env.VITE_API_URL || "https://meu-imovel-api-3z32.onrender.com";
+const API_URL = import.meta.env.VITE_API_URL || 
+  (window.location.hostname === 'localhost' ? "http://localhost:10000" : "https://meu-imovel-api-3z32.onrender.com");
 
 // Componente de Card extraído para melhor organização e performance
 const ImovelCard = ({ imovel, usuario, onEdit, onDelete, onSell }) => (
@@ -231,19 +232,19 @@ function App() {
             <form onSubmit={manipularAuth} className="p-10 space-y-5">
               {authModo === "cadastro" && (
                 <>
-                  <input required placeholder="Nome Completo" className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
+                  <input required value={dadosAuth.nome} placeholder="Nome Completo" className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
                     onChange={e => setDadosAuth({...dadosAuth, nome: e.target.value})} />
-                  <input required placeholder="CPF (Apenas números)" className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
+                  <input required value={dadosAuth.cpf} placeholder="CPF (Apenas números)" className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
                     onChange={e => setDadosAuth({...dadosAuth, cpf: e.target.value})} />
-                  <input required placeholder="Número do CRECI" className="w-full p-4 bg-slate-50 border border-indigo-100 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
+                  <input required value={dadosAuth.creci} placeholder="Número do CRECI" className="w-full p-4 bg-slate-50 border border-indigo-100 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
                     onChange={e => setDadosAuth({...dadosAuth, creci: e.target.value})} />
-                  <input required placeholder="WhatsApp (DDD + Número)" className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
+                  <input required value={dadosAuth.telefone} placeholder="WhatsApp (DDD + Número)" className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
                     onChange={e => setDadosAuth({...dadosAuth, telefone: e.target.value})} />
                 </>
               )}
-              <input required type="email" placeholder="Seu E-mail" className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
+              <input required value={dadosAuth.email} type="email" placeholder="Seu E-mail" className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
                 onChange={e => setDadosAuth({...dadosAuth, email: e.target.value})} />
-              <input required type="password" placeholder="Sua Senha" className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
+              <input required value={dadosAuth.senha} type="password" placeholder="Sua Senha" className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
                 onChange={e => setDadosAuth({...dadosAuth, senha: e.target.value})} />
               
               <button disabled={carregando} className="w-full bg-indigo-600 text-white p-5 rounded-2xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all flex justify-center active:scale-[0.98]">

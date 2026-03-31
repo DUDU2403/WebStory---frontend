@@ -3,7 +3,7 @@ import { X, ShieldCheck } from 'lucide-react';
 
 const PrivacyPolicy = ({ onClose }) => {
   return (
-    <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-sm z-[110] flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-sm z-110 flex items-center justify-center p-4">
       <div className="bg-white dark:bg-slate-900 w-full max-w-2xl max-h-[80vh] rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col border border-slate-200 dark:border-slate-800">
         <div className="p-6 bg-indigo-600 text-white flex justify-between items-center">
           <div className="flex items-center gap-2">

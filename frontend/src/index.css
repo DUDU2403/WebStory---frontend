@@ -1,14 +1,11 @@
 @import "tailwindcss";
 
-/* O erro acontece quando tentamos usar @apply antes do Tailwind carregar.
-   Remova qualquer @apply que esteja nas primeiras linhas se o erro persistir. */
-
-:root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
 }
 
-/* Em vez de usar @apply aqui no CSS, vamos fazer o seguinte: */
-body {
-  margin: 0;
-  background-color: #f8fafc; /* Isso é o mesmo que o bg-slate-50 */
+@layer base {
+  body {
+    @apply bg-slate-50 text-slate-900 antialiased m-0;
+  }
 }

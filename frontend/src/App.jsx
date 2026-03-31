@@ -81,7 +81,6 @@ function App() {
   // Estados para o Imóvel
   const [novoImovel, setNovoImovel] = useState({ titulo: "", preco: "", localizacao: "", contato: "", tipoNegocio: "venda", tipoImovel: "casa", comissao: "6", imagemUrl: "" });
   const [fotoArquivo, setFotoArquivo] = useState(null);
-  const localizacaoRef = useRef(null);
 
   const carregarImoveis = async () => {
     try {

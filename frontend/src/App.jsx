@@ -221,9 +221,9 @@ function App() {
 
       {/* MODAL DE LOGIN/CADASTRO */}
       {mostrarAuth && (
-        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
+        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-100 flex items-center justify-center p-4 animate-in fade-in duration-300">
           <div className="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 border border-white/20">
-            <div className="p-8 bg-gradient-to-br from-indigo-600 to-blue-700 text-white flex justify-between items-center">
+            <div className="p-8 bg-linear-to-br from-indigo-600 to-blue-700 text-white flex justify-between items-center">
               <h2 className="text-2xl font-bold tracking-tight">
                 {authModo === "login" ? "Acesse sua conta" : "Seja um anunciante"}
               </h2>
@@ -275,13 +275,13 @@ function App() {
 
       {/* HEADER */}
       <header className="sticky top-0 z-50 px-6 py-4">
-        <nav className="max-w-7xl mx-auto bg-white/80 backdrop-blur-xl border border-white/40 shadow-sm rounded-[2rem] px-6 py-3 flex flex-col md:flex-row justify-between items-center gap-4">
+        <nav className="max-w-7xl mx-auto bg-white/80 backdrop-blur-xl border border-white/40 shadow-sm rounded-4xl px-6 py-3 flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-3 group cursor-pointer">
             <div className="bg-indigo-600 text-white p-2.5 rounded-2xl group-hover:rotate-12 transition-transform shadow-lg shadow-indigo-100">
               <Home size={28} strokeWidth={2.5} />
             </div>
               <div className="block">
-              <h1 className="text-2xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-700 to-blue-600">Imóvel Pro</h1>
+              <h1 className="text-2xl font-black tracking-tight bg-clip-text text-transparent bg-linear-to-r from-indigo-700 to-blue-600">Imóvel Pro</h1>
               {usuario && <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em]">Olá, {usuario.nome.split(' ')[0]}</p>}
             </div>
           </div>
@@ -331,8 +331,8 @@ function App() {
         {/* BENTO GRID DE RECURSOS (Aparece apenas no modo buscar) */}
         {modo === "buscar" && (
           <section className="mb-20 grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="md:col-span-2 bg-gradient-to-br from-indigo-600 to-indigo-900 p-10 rounded-[3rem] text-white flex flex-col justify-between overflow-hidden relative group border border-indigo-400/20">
-              <Zap className="absolute right-[-20px] top-[-20px] w-64 h-64 text-white/10 group-hover:scale-110 transition-transform duration-700" />
+            <div className="md:col-span-2 bg-linear-to-br from-indigo-600 to-indigo-900 p-10 rounded-[3rem] text-white flex flex-col justify-between overflow-hidden relative group border border-indigo-400/20">
+              <Zap className="absolute -right-5 -top-5 w-64 h-64 text-white/10 group-hover:scale-110 transition-transform duration-700" />
               <div className="relative">
                 <div className="bg-white/20 w-fit p-3 rounded-2xl mb-6 backdrop-blur-md"><Users size={24} /></div>
                 <h3 className="text-4xl font-black mb-4 tracking-tighter">Sistema de Match</h3>
@@ -439,7 +439,7 @@ function App() {
                 <p className="text-slate-500 text-lg">Desbloqueie parcerias exclusivas e acelere suas vendas.</p>
               </div>
               
-              <div className="bg-slate-50 p-8 rounded-[2rem] border border-slate-200">
+              <div className="bg-slate-50 p-8 rounded-4xl border border-slate-200">
                 <div className="flex justify-between items-center mb-6">
                   <span className="text-slate-600 font-bold text-lg">Assinatura Mensal</span>
                   <span className="text-3xl font-black text-indigo-600">R$ 29,90</span>
@@ -491,7 +491,7 @@ function App() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {matches.map(m => (
                   <div key={m._id} className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100">
-                    <img src={m.imagemUrl} className="w-full h-48 object-cover rounded-[1.5rem] mb-4" />
+                    <img src={m.imagemUrl} className="w-full h-48 object-cover rounded-3xl mb-4" />
                     <div className="flex justify-between items-start mb-2">
                       <h3 className="font-bold text-lg">{m.titulo}</h3>
                       <span className="bg-indigo-600 text-white px-3 py-1 rounded-full text-[10px] font-black">+{m.comissao}%</span>

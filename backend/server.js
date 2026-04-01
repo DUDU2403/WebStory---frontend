@@ -13,11 +13,18 @@ app.use(express.json());
 const corsOptions = {
   origin: ['https://meu-imovel-app.vercel.app', 'http://localhost:5173'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'x-auth-token', 'Authorization'],
-  credentials: true
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-auth-token'],
+  credentials: true,
+  optionsSuccessStatus: 200
 };
 
 app.use(cors(corsOptions));
+
+app.options('*', cors(corsOptions));
+
+app.use('/auth', authRoutes);
+
+app.use('/imoveis', imoveisRoutes);
 
 // --- CONEXÃO COM MONGODB ---
 const connectDB = async () => {

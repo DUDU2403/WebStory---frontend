@@ -5,7 +5,7 @@ import PrivacyPolicy from './PrivacyPolicy';
 
 // Dica: Use localhost se estiver testando localmente, ou a URL do seu deploy
 const API_URL = import.meta.env.VITE_API_URL || 
-  (window.location.hostname === 'localhost' ? "http://localhost:10000" : "https://meu-imovel-api-3z32.onrender.com");
+  (window.location.hostname === 'localhost' ? "http://localhost:10000" : "https://meu-imovel-api.onrender.com");
 
 // Componente de Card extraído para melhor organização e performance
 const ImovelCard = ({ imovel, usuario, onEdit, onDelete, onSell }) => (

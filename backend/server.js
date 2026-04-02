@@ -12,6 +12,7 @@ const app = express();
 app.use(cors({
   origin: [
     'https://meu-imovel-app.vercel.app',
+    'https://meu-imovel-app-dudu2403s-projects.vercel.app',
     'http://localhost:5173',
     'http://localhost:3000'
   ],

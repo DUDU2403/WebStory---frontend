@@ -10,12 +10,18 @@ const app = express();
 
 // --- CONFIGURAÇÃO DO CORS ---
 app.use(cors({
-  origin: [
-    'https://meu-imovel-app.vercel.app',
-    'https://meu-imovel-app-dudu2403s-projects.vercel.app',
-    'http://localhost:5173',
-    'http://localhost:3000'
-  ],
+  origin: (origin, callback) => {
+    const allowed = [
+      'https://meu-imovel-app.vercel.app',
+      'http://localhost:5173',
+      'http://localhost:3000'
+    ];
+    if (!origin || allowed.includes(origin) || origin.endsWith('.vercel.app')) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'x-auth-token'],
   credentials: true
@@ -119,7 +125,6 @@ app.post('/auth/register', async (req, res) => {
   try {
     const { nome, email, cpf, creci, telefone, senha } = req.body;
 
-    // Validação básica dos campos obrigatórios
     if (!nome || !email || !cpf || !telefone || !senha) {
       return res.status(400).json({ message: "Preencha todos os campos obrigatórios." });
     }
@@ -155,7 +160,6 @@ app.post('/auth/login', async (req, res) => {
     const senhaValida = await bcrypt.compare(senha, user.senha);
     if (!senhaValida) return res.status(400).json({ message: "E-mail ou senha inválidos." });
 
-    // Token com expiração de 7 dias
     const token = jwt.sign(
       { id: user._id, nome: user.nome },
       process.env.JWT_SECRET || 'fallback_secret_para_dev',
@@ -176,14 +180,14 @@ app.post('/auth/login', async (req, res) => {
   }
 });
 
-// Ativar assinatura (protegida por auth)
+// Ativar assinatura
 app.post('/auth/subscribe', auth, async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ message: "Usuário não encontrado." });
 
     user.isSubscriptionActive = true;
-    user.subscriptionExpires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 dias
+    user.subscriptionExpires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
     await user.save();
 
     res.json({ message: "Assinatura ativada!", user: { id: user._id, isSubscriptionActive: true } });
@@ -204,7 +208,7 @@ app.get('/imoveis', async (req, res) => {
   }
 });
 
-// Matches (requer assinatura ativa)
+// Matches
 app.get('/imoveis/matches', auth, async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
@@ -214,7 +218,6 @@ app.get('/imoveis/matches', auth, async (req, res) => {
     const assinaturaExpirada = user.subscriptionExpires && user.subscriptionExpires < hoje;
 
     if (!user.isSubscriptionActive || assinaturaExpirada) {
-      // Atualiza status se expirou
       if (user.isSubscriptionActive && assinaturaExpirada) {
         user.isSubscriptionActive = false;
         await user.save();

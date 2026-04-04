@@ -949,7 +949,7 @@ function App() {
             )}
 
             {usuario && !usuario.isSubscriptionActive && (
-              <div className="bg-gradient-to-r from-indigo-600 to-blue-600 rounded-2xl p-6 mb-8 flex items-center justify-between">
+              <div className="bg-linear-to-r from-indigo-600 to-blue-600 rounded-2xl p-6 mb-8 flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
                     <Zap size={24} className="text-white" />

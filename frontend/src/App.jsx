@@ -108,7 +108,7 @@ const steps = ['Perfil', 'Profissional', 'Segurança'];
 
 // ✅ CORREÇÃO: Campo movido para FORA do MultiStepRegister
 // Antes estava dentro, causando re-mount a cada tecla digitada (perda de foco)
-const Campo = ({ label, icon: Icon, name, type = 'text', placeholder, dados, setDados, erros, setErros, showSenha, setShowSenha }) => (
+const Campo = React.memo(({ label, icon: Icon, name, type = 'text', placeholder,dados, setDados, erros, setErros, showSenha, setShowSenha }) => (
   <div>
     <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">{label}</label>
     <div className="relative">
@@ -116,7 +116,7 @@ const Campo = ({ label, icon: Icon, name, type = 'text', placeholder, dados, set
       <input
         type={name === 'senha' ? (showSenha ? 'text' : 'password') : type}
         placeholder={placeholder}
-        value={dados[name] || ''}
+        value={dados?.[name] ?? ''}
         onChange={e => {
           let v = e.target.value;
           if (name === 'cpf') v = fmtCPF(v);
@@ -171,7 +171,14 @@ const MultiStepRegister = ({ dados, setDados, onSubmit, carregando, onSwitch, mo
   };
 
   // Props compartilhadas para todos os Campos
-  const campoProps = { dados, setDados, erros, setErros, showSenha, setShowSenha };
+  const campoProps = React.useMemo(() => ({
+  dados,
+  setDados,
+  erros,
+  setErros,
+  showSenha,
+  setShowSenha
+}), [dados, erros, showSenha]);
 
   return (
     <div className="p-8">

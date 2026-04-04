@@ -134,7 +134,7 @@ const Campo = React.memo(({ label, icon: Icon, name, type = 'text', placeholder,
     </div>
     {erros[name] && <p className="text-rose-500 text-xs mt-1">{erros[name]}</p>}
   </div>
-);
+));
 
 const MultiStepRegister = ({ dados, setDados, onSubmit, carregando, onSwitch, mostrarPolitica }) => {
   const [step, setStep] = useState(0);

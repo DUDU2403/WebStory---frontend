@@ -1,170 +1,106 @@
-# 🏠 Meu Imóvel App
+# WebStory — Backend
 
-Uma aplicação moderna de marketplace para compra, venda e aluguel de imóveis. Desenvolvida com React (frontend) e Node.js/Express (backend).
+Sistema de lojas online com pedidos via WhatsApp.
 
-## 🎯 Funcionalidades
+## Tecnologias
+- Node.js + Express
+- MongoDB (Mongoose)
+- JWT para autenticação
+- bcryptjs para senhas
 
-- ✨ **Buscar Imóveis**: Interface moderna com filtros por tipo (venda/aluguel) e localização
-- 📢 **Anunciar Imóveis**: Dashboard com gerenciamento completo de seus anúncios
-- 🖼️ **Upload de Fotos**: Integração com Cloudinary para hospedagem de imagens
-- 👤 **Gerenciamento de Anúncios**: Editar, deletar e acompanhar seus imóveis
-- 📱 **Responsivo**: Design totalmente adaptável para desktop e mobile
-- 🎨 **Interface Moderna**: Gradientes, animações e componentes atualizados
+---
 
-## 📋 Pré-requisitos
-
-- Node.js (v16+)
-- npm ou yarn
-- MongoDB Atlas (conta gratuita)
-- Cloudinary (conta gratuita)
-
-## 🚀 Instalação
-
-### 1. Clone o repositório
-```bash
-git clone https://github.com/seu-usuario/meu-imovel-app.git
-cd meu-imovel-app
-```
-
-### 2. Configure o Backend
+## Instalação local
 
 ```bash
-cd backend
 npm install
-```
-
-Crie um arquivo `.env`:
-```
-MONGO_URI=sua_string_de_conexao_mongodb
-PORT=5000
-```
-
-Inicie o servidor:
-```bash
-node server.js
-```
-
-### 3. Configure o Frontend
-
-```bash
-cd ../frontend
-npm install
-```
-
-Crie um arquivo `.env`:
-```
-VITE_CLOUDINARY_CLOUD_NAME=seu_cloud_name
-VITE_CLOUDINARY_UPLOAD_PRESET=seu_upload_preset
-```
-
-Inicie o desenvolvimento:
-```bash
+cp .env.example .env
+# Preencha o .env com suas variáveis
 npm run dev
 ```
 
-## 🌐 Variáveis de Ambiente
+---
 
-### Backend (.env)
-- `MONGO_URI`: Sua string de conexão MongoDB Atlas
-- `PORT`: Porta do servidor (padrão: 5000)
+## Deploy no Render
 
-### Frontend (.env)
-- `VITE_CLOUDINARY_CLOUD_NAME`: Seu nome de cloud do Cloudinary
-- `VITE_CLOUDINARY_UPLOAD_PRESET`: Seu upload preset do Cloudinary
+1. Suba o projeto no GitHub com o nome `WebStory`
+2. No Render: **New Web Service** → conecte o repositório
+3. Em **Environment Variables**, adicione:
+   - `MONGO_URI` — URI do novo projeto no MongoDB Atlas
+   - `JWT_SECRET` — string secreta longa
+   - `ADMIN_EMAIL` — seu e-mail de admin
+4. **Start Command:** `node server.js`
 
-## 📦 Estrutura do Projeto
+---
 
-```
-meu-imovel-app/
-├── backend/
-│   ├── server.js          # Servidor Express
-│   ├── package.json       # Dependências
-│   └── .env              # Variáveis de ambiente
-├── frontend/
-│   ├── src/
-│   │   ├── App.jsx        # Componente principal
-│   │   ├── main.jsx       # Entrada da aplicação
-│   │   └── index.css      # Estilos globais
-│   ├── package.json       # Dependências
-│   ├── vite.config.js     # Configuração Vite
-│   ├── tailwind.config.js # Configuração Tailwind
-│   └── .env              # Variáveis de ambiente
-└── README.md
-```
+## Primeiro acesso como admin
 
-## 🔌 API Endpoints
+Acesse `POST /admin/login` com seu e-mail e defina uma senha.
+Na primeira vez, o sistema cria o admin automaticamente.
 
-| Método | Endpoint | Descrição |
-|--------|----------|-----------|
-| GET | `/imoveis` | Listar todos os imóveis |
-| POST | `/imoveis` | Criar novo imóvel |
-| PUT | `/imoveis/:id` | Atualizar imóvel |
-| DELETE | `/imoveis/:id` | Deletar imóvel |
-| POST | `/migrar` | Migrar dados antigos |
+---
 
-## 🛠️ Tecnologias
+## Fluxo principal
 
-### Frontend
-- React 19.2.4
-- Vite 8.0.1
-- Tailwind CSS 4.2.2
-- Axios (requisições HTTP)
-- Lucide React (ícones)
+### Admin
+1. `POST /admin/login` — login do admin
+2. `POST /admin/chaves` — gera chave de acesso para uma loja
+3. Envia a chave para o dono da loja
 
-### Backend
-- Node.js
-- Express 5.2.1
-- MongoDB/Mongoose 9.3.1
-- CORS habilitado
+### Loja
+4. `POST /loja/register` — cadastro com a chave recebida → recebe `codigoLoja`
+5. `POST /loja/login` — login
+6. `POST /produtos` — cadastra produtos
+7. `POST /estoque/movimentacao` — registra entradas e saídas
 
-### Serviços Externos
-- MongoDB Atlas (banco de dados)
-- Cloudinary (hospedagem de imagens)
+### Cliente
+8. `GET /loja/:codigoLoja` — acessa a vitrine da loja
+9. `GET /loja/:codigoLoja/produtos` — lista produtos
+10. `POST /pedidos` — finaliza carrinho → recebe link do WhatsApp
 
-## 📱 Uso da Aplicação
+---
 
-### Modo Buscar
-- Navegue pelos imóveis disponíveis
-- Filtre por tipo (venda/aluguel)
-- Pesquise por título ou localização
+## Rotas completas
 
-### Modo Anunciar
-- Crie novos anúncios de imóveis
-- Edite seus anúncios existentes
-- Gerencie seus imóveis
-- Delete anúncios quando necessário
+### Admin
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| POST | `/admin/login` | Login do admin |
+| POST | `/admin/chaves` | Gerar chave de acesso |
+| GET | `/admin/chaves` | Listar chaves |
+| DELETE | `/admin/chaves/:id` | Remover chave |
+| GET | `/admin/lojas` | Listar lojas |
+| PUT | `/admin/lojas/:id/status` | Ativar/desativar loja |
+| DELETE | `/admin/lojas/:id` | Remover loja |
+| GET | `/admin/stats` | Estatísticas gerais |
 
-## 🚀 Deploy
+### Loja
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| POST | `/loja/register` | Cadastro com chave |
+| POST | `/loja/login` | Login |
+| PUT | `/loja/perfil` | Atualizar banner/foto |
+| GET | `/loja/:codigoLoja` | Perfil público da loja |
+| GET | `/minha-loja/produtos` | Produtos do painel |
+| GET | `/minha-loja/pedidos` | Pedidos recebidos |
 
-### Vercel (Frontend)
-1. Push seu código para GitHub
-2. Acesse [vercel.com](https://vercel.com)
-3. Importe seu repositório
-4. Configure as variáveis de ambiente
-5. Deploy automático a cada push
+### Produtos
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| GET | `/loja/:codigoLoja/produtos` | Vitrine pública |
+| POST | `/produtos` | Cadastrar produto |
+| PUT | `/produtos/:id` | Editar produto |
+| DELETE | `/produtos/:id` | Remover produto |
 
-### Render (Backend)
-1. Crie um account em [render.com](https://render.com)
-2. Crie um novo Web Service
-3. Conecte seu repositório GitHub
-4. Configure variáveis de ambiente
-5. Deploy automático
+### Estoque
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| POST | `/estoque/movimentacao` | Entrada ou saída |
+| GET | `/estoque/historico` | Histórico |
+| GET | `/estoque/alertas` | Produtos com estoque baixo |
 
-### Alternativa: Railway
-1. Acesse [railway.app](https://railway.app)
-2. Conecte seu GitHub
-3. Selecione o repositório e pasta `/backend`
-4. Configure variáveis de ambiente
-5. Deploy realizado
-
-## 👨‍💻 Autor
-
-Samuel
-
-## 📄 Licença
-
-Este projeto é de código aberto e disponível sob a licença MIT.
-
-## 📞 Suporte
-
-Para dúvidas ou sugestões, abra uma issue no repositório.
+### Pedidos
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| POST | `/pedidos` | Criar pedido + link WhatsApp |
+| PUT | `/pedidos/:id/status` | Atualizar status |

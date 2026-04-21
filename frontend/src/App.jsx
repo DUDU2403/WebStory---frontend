@@ -1,123 +1,75 @@
-// ─── App Principal ────────────────────────────────────────────────────────────
-// Substitua APENAS a função App() no final do seu App.jsx por este trecho
+import { useState, useEffect } from 'react';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { ToastProvider } from './contexts/ToastContext';
 
-function App() {
-  const [sessao, setSessao] = useState(() => JSON.parse(localStorage.getItem('webstory_sessao') || 'null'));
-  const [token, setToken] = useState(() => localStorage.getItem('webstory_token') || null);
-  const [carregando, setCarregando] = useState(false);
-  const [modo, setModo] = useState(() => {
-    // Define o modo inicial com base na sessão salva
-    const s = JSON.parse(localStorage.getItem('webstory_sessao') || 'null');
-    if (s?.isAdmin) return 'admin';
-    if (s) return 'painel';
-    return 'vitrine';
-  });
+// Pages
+import LandingPage     from './pages/LandingPage';
+import LoginVendedor   from './pages/LoginVendedor';
+import RegisterVendedor from './pages/RegisterVendedor';
+import DashboardVendedor from './pages/DashboardVendedor';
+import LojaCliente     from './pages/LojaCliente';
+import AdminPanel      from './pages/AdminPanel';
 
-  const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL || 'eduardojunior3300@outlook.com';
+function Router() {
+  const { user, loading } = useAuth();
+  const [page, setPage]   = useState('landing'); // landing | loja | login | register | dashboard | admin
+  const [codigoLoja, setCodigoLoja] = useState('');
 
-  const handleAuth = async (dados, tipo) => {
-    setCarregando(true);
-    try {
-      if (tipo === 'login') {
-        // Login admin
-        if (dados.email === ADMIN_EMAIL) {
-          const res = await axios.post(`${API_URL}/admin/login`, dados);
-          localStorage.setItem('webstory_token', res.data.token);
-          localStorage.setItem('webstory_sessao', JSON.stringify({ email: res.data.email, isAdmin: true }));
-          setToken(res.data.token);
-          setSessao({ email: res.data.email, isAdmin: true });
-          setModo('admin');
-          return;
-        }
-        // Login de loja
-        const res = await axios.post(`${API_URL}/loja/login`, dados);
-        localStorage.setItem('webstory_token', res.data.token);
-        localStorage.setItem('webstory_sessao', JSON.stringify(res.data.loja));
-        setToken(res.data.token);
-        setSessao(res.data.loja);
-        setModo('painel');
-      } else {
-        // Cadastro
-        const resCadastro = await axios.post(`${API_URL}/loja/register`, dados);
-        const resLogin = await axios.post(`${API_URL}/loja/login`, { email: dados.email, senha: dados.senha });
-        const codigoLoja = resLogin.data.loja.codigoLoja;
-        alert(`✅ Loja criada com sucesso!\n\nSeu código de acesso para clientes é:\n\n${codigoLoja}\n\nGuarde este código — é como seus clientes vão acessar sua loja!`);
-        localStorage.setItem('webstory_token', resLogin.data.token);
-        localStorage.setItem('webstory_sessao', JSON.stringify(resLogin.data.loja));
-        setToken(resLogin.data.token);
-        setSessao(resLogin.data.loja);
-        setModo('painel');
-      }
-    } catch (err) {
-      alert(err.response?.data?.message || 'Erro de conexão com o servidor.');
-    } finally {
-      setCarregando(false);
-    }
+  // Lê hash da URL para rota de loja pública
+  useEffect(() => {
+    const handleHash = () => {
+      const hash = window.location.hash.replace('#', '');
+      if (hash.startsWith('loja/')) {
+        const code = hash.split('/')[1]?.toUpperCase();
+        if (code) { setCodigoLoja(code); setPage('loja'); }
+      } else if (hash === 'login')    setPage('login');
+      else if (hash === 'register')   setPage('register');
+      else if (hash === 'dashboard')  setPage('dashboard');
+      else if (hash === 'admin')      setPage('admin');
+      else setPage('landing');
+    };
+    handleHash();
+    window.addEventListener('hashchange', handleHash);
+    return () => window.removeEventListener('hashchange', handleHash);
+  }, []);
+
+  const nav = (p, extra) => {
+    if (p === 'loja' && extra) { window.location.hash = `loja/${extra}`; }
+    else window.location.hash = p === 'landing' ? '' : p;
   };
 
-  const logout = () => {
-    localStorage.removeItem('webstory_token');
-    localStorage.removeItem('webstory_sessao');
-    setToken(null);
-    setSessao(null);
-    setModo('vitrine');
-  };
+  if (loading) return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
+      <div className="animate-spin" style={{ width: 40, height: 40, border: '3px solid #e2e8f0', borderTopColor: 'var(--brand)', borderRadius: '50%' }} />
+    </div>
+  );
 
-  // ── Roteamento ──────────────────────────────────────────────────────────────
+  // Redireciona vendedor logado para dashboard
+  if (page === 'login' && user) { nav('dashboard'); return null; }
 
-  // Vitrine pública (sem sessão)
-  if (modo === 'vitrine') {
-    return (
-      <>
-        <Vitrine />
-        {/* Botão fixo para dono de loja acessar o painel */}
-        <div className="fixed bottom-4 right-4 z-50">
-          <button
-            onClick={() => setModo('painel')}
-            className="flex items-center gap-2 px-4 py-3 bg-slate-800 text-white rounded-2xl font-bold text-sm shadow-xl hover:bg-slate-900 transition-colors">
-            <LogIn size={16} /> Sou dono de loja
-          </button>
-        </div>
-      </>
-    );
+  switch (page) {
+    case 'loja':
+      return <LojaCliente codigoLoja={codigoLoja} nav={nav} />;
+    case 'login':
+      return <LoginVendedor nav={nav} />;
+    case 'register':
+      return <RegisterVendedor nav={nav} />;
+    case 'dashboard':
+      if (!user) { nav('login'); return null; }
+      return <DashboardVendedor nav={nav} />;
+    case 'admin':
+      return <AdminPanel nav={nav} />;
+    default:
+      return <LandingPage nav={nav} />;
   }
-
-  // Painel da loja
-  if (modo === 'painel') {
-    // Sem sessão ou sem token → mostra login
-    if (!sessao || !token) {
-      return <LoginLoja onLogin={handleAuth} carregando={carregando} />;
-    }
-    // Admin tentou ir ao painel → redireciona para admin
-    if (sessao.isAdmin) {
-      setModo('admin');
-      return null;
-    }
-    return (
-      <>
-        <PainelLoja loja={sessao} token={token} onLogout={logout} />
-        {/* Botão para ver a vitrine como cliente */}
-        <div className="fixed bottom-4 right-4 z-50">
-          <button
-            onClick={() => setModo('vitrine')}
-            className="flex items-center gap-2 px-4 py-3 bg-indigo-600 text-white rounded-2xl font-bold text-sm shadow-xl hover:bg-indigo-700 transition-colors">
-            <Store size={16} /> Ver vitrine
-          </button>
-        </div>
-      </>
-    );
-  }
-
-  // Painel admin
-  if (modo === 'admin') {
-    if (!sessao?.isAdmin || !token) {
-      return <LoginLoja onLogin={handleAuth} carregando={carregando} />;
-    }
-    return <AdminPainel token={token} onLogout={logout} />;
-  }
-
-  // Fallback
-  return <LoginLoja onLogin={handleAuth} carregando={carregando} />;
 }
 
-export default App;
+export default function App() {
+  return (
+    <AuthProvider>
+      <ToastProvider>
+        <Router />
+      </ToastProvider>
+    </AuthProvider>
+  );
+}

@@ -58,14 +58,12 @@ const gerarCodigoLoja  = () => 'LOJA-' + crypto.randomBytes(2).toString('hex').t
 // MODELS
 // ============================================================
 
-// Admin (superusuário do sistema)
 const Admin = mongoose.model('Admin', new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   senha: { type: String, required: true },
   criadoEm: { type: Date, default: Date.now }
 }));
 
-// Chave de acesso gerada pelo admin para liberar cadastro de loja
 const ChaveAcesso = mongoose.model('ChaveAcesso', new mongoose.Schema({
   chave:    { type: String, required: true, unique: true },
   usada:    { type: Boolean, default: false },
@@ -74,7 +72,6 @@ const ChaveAcesso = mongoose.model('ChaveAcesso', new mongoose.Schema({
   usadaEm:  { type: Date, default: null }
 }));
 
-// Loja cadastrada com chave de acesso
 const Loja = mongoose.model('Loja', new mongoose.Schema({
   nome:         { type: String, required: true },
   email:        { type: String, required: true, unique: true },
@@ -90,7 +87,6 @@ const Loja = mongoose.model('Loja', new mongoose.Schema({
   criadaEm:     { type: Date, default: Date.now }
 }));
 
-// Produto de uma loja
 const Produto = mongoose.model('Produto', new mongoose.Schema({
   lojaId:       { type: mongoose.Schema.Types.ObjectId, ref: 'Loja', required: true },
   nome:         { type: String, required: true },
@@ -107,7 +103,6 @@ const Produto = mongoose.model('Produto', new mongoose.Schema({
   criadoEm:     { type: Date, default: Date.now }
 }));
 
-// Movimentação de estoque (entrada/saída)
 const Movimentacao = mongoose.model('Movimentacao', new mongoose.Schema({
   lojaId:     { type: mongoose.Schema.Types.ObjectId, ref: 'Loja', required: true },
   produtoId:  { type: mongoose.Schema.Types.ObjectId, ref: 'Produto', required: true },
@@ -117,7 +112,7 @@ const Movimentacao = mongoose.model('Movimentacao', new mongoose.Schema({
   criadoEm:  { type: Date, default: Date.now }
 }));
 
-// Pedido gerado pelo cliente (registrado antes de ir ao WhatsApp)
+// ✅ Pedido com campos extras do cliente
 const Pedido = mongoose.model('Pedido', new mongoose.Schema({
   lojaId:    { type: mongoose.Schema.Types.ObjectId, ref: 'Loja', required: true },
   itens: [{
@@ -126,10 +121,14 @@ const Pedido = mongoose.model('Pedido', new mongoose.Schema({
     preco:     Number,
     quantidade: Number
   }],
-  total:         { type: Number, required: true },
-  nomeCliente:   { type: String, default: '' },
-  status:        { type: String, enum: ['pendente', 'confirmado', 'cancelado'], default: 'pendente' },
-  criadoEm:     { type: Date, default: Date.now }
+  total:            { type: Number, required: true },
+  nomeCliente:      { type: String, default: '' },
+  telefoneCliente:  { type: String, default: '' },
+  enderecoEntrega:  { type: String, default: '' },
+  tipoEntrega:      { type: String, enum: ['entrega', 'retirada'], default: 'entrega' },
+  observacao:       { type: String, default: '' },
+  status:           { type: String, enum: ['pendente', 'confirmado', 'cancelado'], default: 'pendente' },
+  criadoEm:        { type: Date, default: Date.now }
 }));
 
 // ============================================================
@@ -174,7 +173,6 @@ app.post('/admin/login', async (req, res) => {
 
     let admin = await Admin.findOne({ email });
 
-    // Primeiro acesso: cria o admin automaticamente
     if (!admin) {
       if (!senha) return res.status(400).json({ message: 'Defina uma senha no primeiro acesso.' });
       const hash = await bcrypt.hash(senha, 10);
@@ -200,7 +198,6 @@ app.post('/admin/login', async (req, res) => {
 // ROTAS: ADMIN — chaves de acesso
 // ============================================================
 
-// Gerar nova chave
 app.post('/admin/chaves', adminAuth, async (req, res) => {
   try {
     const chave = gerarChaveAcesso();
@@ -211,7 +208,6 @@ app.post('/admin/chaves', adminAuth, async (req, res) => {
   }
 });
 
-// Listar todas as chaves
 app.get('/admin/chaves', adminAuth, async (req, res) => {
   try {
     const chaves = await ChaveAcesso.find().populate('lojaId', 'nome email').sort({ criadaEm: -1 });
@@ -221,7 +217,6 @@ app.get('/admin/chaves', adminAuth, async (req, res) => {
   }
 });
 
-// Remover chave não usada
 app.delete('/admin/chaves/:id', adminAuth, async (req, res) => {
   try {
     const chave = await ChaveAcesso.findById(req.params.id);
@@ -356,7 +351,6 @@ app.post('/loja/login', async (req, res) => {
   }
 });
 
-// Atualizar perfil da loja (banner, foto, dados)
 app.put('/loja/perfil', lojaAuth, async (req, res) => {
   try {
     const { nome, telefone, endereco, fotoPerfil, bannerFundo } = req.body;
@@ -392,7 +386,6 @@ app.get('/loja/:codigoLoja', async (req, res) => {
 // ROTAS: PRODUTOS
 // ============================================================
 
-// Listar produtos da loja (público)
 app.get('/loja/:codigoLoja/produtos', async (req, res) => {
   try {
     const loja = await Loja.findOne({ codigoLoja: req.params.codigoLoja.toUpperCase(), ativa: true });
@@ -412,7 +405,6 @@ app.get('/loja/:codigoLoja/produtos', async (req, res) => {
   }
 });
 
-// Cadastrar produto (loja autenticada)
 app.post('/produtos', lojaAuth, async (req, res) => {
   try {
     const { nome, descricao, preco, precoPromo, emPromocao, imagemUrl, categoria, estoque, estoqueMin } = req.body;
@@ -435,7 +427,6 @@ app.post('/produtos', lojaAuth, async (req, res) => {
   }
 });
 
-// Editar produto
 app.put('/produtos/:id', lojaAuth, async (req, res) => {
   try {
     const produto = await Produto.findById(req.params.id);
@@ -449,7 +440,6 @@ app.put('/produtos/:id', lojaAuth, async (req, res) => {
   }
 });
 
-// Deletar produto
 app.delete('/produtos/:id', lojaAuth, async (req, res) => {
   try {
     const produto = await Produto.findById(req.params.id);
@@ -463,7 +453,6 @@ app.delete('/produtos/:id', lojaAuth, async (req, res) => {
   }
 });
 
-// Listar produtos da própria loja (painel da loja)
 app.get('/minha-loja/produtos', lojaAuth, async (req, res) => {
   try {
     const produtos = await Produto.find({ lojaId: req.loja.id }).sort({ criadoEm: -1 });
@@ -477,7 +466,6 @@ app.get('/minha-loja/produtos', lojaAuth, async (req, res) => {
 // ROTAS: ESTOQUE
 // ============================================================
 
-// Registrar movimentação de estoque
 app.post('/estoque/movimentacao', lojaAuth, async (req, res) => {
   try {
     const { produtoId, tipo, quantidade, motivo } = req.body;
@@ -489,7 +477,6 @@ app.post('/estoque/movimentacao', lojaAuth, async (req, res) => {
     if (!produto) return res.status(404).json({ message: 'Produto não encontrado.' });
     if (produto.lojaId.toString() !== req.loja.id) return res.status(403).json({ message: 'Sem permissão.' });
 
-    // Atualiza o estoque
     if (tipo === 'entrada') {
       produto.estoque += quantidade;
     } else if (tipo === 'saida') {
@@ -500,7 +487,6 @@ app.post('/estoque/movimentacao', lojaAuth, async (req, res) => {
     }
     await produto.save();
 
-    // Registra a movimentação
     const mov = await new Movimentacao({
       lojaId: req.loja.id,
       produtoId,
@@ -519,7 +505,6 @@ app.post('/estoque/movimentacao', lojaAuth, async (req, res) => {
   }
 });
 
-// Histórico de movimentações
 app.get('/estoque/historico', lojaAuth, async (req, res) => {
   try {
     const { produtoId } = req.query;
@@ -537,7 +522,6 @@ app.get('/estoque/historico', lojaAuth, async (req, res) => {
   }
 });
 
-// Produtos com estoque baixo (alerta)
 app.get('/estoque/alertas', lojaAuth, async (req, res) => {
   try {
     const alertas = await Produto.find({
@@ -555,10 +539,9 @@ app.get('/estoque/alertas', lojaAuth, async (req, res) => {
 // ROTAS: PEDIDOS
 // ============================================================
 
-// Criar pedido (cliente finaliza carrinho)
 app.post('/pedidos', async (req, res) => {
   try {
-    const { codigoLoja, itens, nomeCliente } = req.body;
+    const { codigoLoja, itens, nomeCliente, telefoneCliente, enderecoEntrega, tipoEntrega, observacao } = req.body;
     if (!codigoLoja || !itens || itens.length === 0) {
       return res.status(400).json({ message: 'codigoLoja e itens são obrigatórios.' });
     }
@@ -566,11 +549,20 @@ app.post('/pedidos', async (req, res) => {
     const loja = await Loja.findOne({ codigoLoja: codigoLoja.toUpperCase(), ativa: true });
     if (!loja) return res.status(404).json({ message: 'Loja não encontrada.' });
 
-    // Calcula o total e monta a mensagem do WhatsApp
     let total = 0;
-    let mensagemWpp = `*Novo pedido via WebStory!*\n\n`;
-    if (nomeCliente) mensagemWpp += `*Cliente:* ${nomeCliente}\n\n`;
-    mensagemWpp += `*Itens:*\n`;
+    let mensagemWpp = `*🛒 Novo pedido via WebStory!*\n\n`;
+
+    if (nomeCliente)      mensagemWpp += `*👤 Cliente:* ${nomeCliente}\n`;
+    if (telefoneCliente)  mensagemWpp += `*📱 Telefone:* ${telefoneCliente}\n`;
+    if (tipoEntrega === 'retirada') {
+      mensagemWpp += `*🏪 Tipo:* Retirar na loja\n`;
+    } else {
+      mensagemWpp += `*🚚 Tipo:* Entrega\n`;
+      if (enderecoEntrega) mensagemWpp += `*📍 Endereço:* ${enderecoEntrega}\n`;
+    }
+    if (observacao) mensagemWpp += `*📝 Obs:* ${observacao}\n`;
+
+    mensagemWpp += `\n*📦 Itens:*\n`;
 
     const itensFormatados = itens.map(item => {
       const subtotal = item.preco * item.quantidade;
@@ -579,18 +571,20 @@ app.post('/pedidos', async (req, res) => {
       return { produtoId: item.produtoId, nome: item.nome, preco: item.preco, quantidade: item.quantidade };
     });
 
-    mensagemWpp += `\n*Total: R$ ${total.toFixed(2)}*\n`;
+    mensagemWpp += `\n*💰 Total: R$ ${total.toFixed(2)}*\n`;
     mensagemWpp += `\n_Pagamento via Pix combinado no WhatsApp._`;
 
-    // Salva o pedido
     const pedido = await new Pedido({
       lojaId: loja._id,
       itens: itensFormatados,
       total,
-      nomeCliente: nomeCliente || ''
+      nomeCliente:     nomeCliente || '',
+      telefoneCliente: telefoneCliente || '',
+      enderecoEntrega: enderecoEntrega || (tipoEntrega === 'retirada' ? 'RETIRADA NA LOJA' : ''),
+      tipoEntrega:     tipoEntrega || 'entrega',
+      observacao:      observacao || '',
     }).save();
 
-    // Monta o link do WhatsApp
     const telefone = loja.telefone.replace(/\D/g, '');
     const linkWhatsApp = `https://wa.me/55${telefone}?text=${encodeURIComponent(mensagemWpp)}`;
 
@@ -600,7 +594,6 @@ app.post('/pedidos', async (req, res) => {
   }
 });
 
-// Listar pedidos da loja
 app.get('/minha-loja/pedidos', lojaAuth, async (req, res) => {
   try {
     const pedidos = await Pedido.find({ lojaId: req.loja.id }).sort({ criadoEm: -1 });
@@ -610,7 +603,6 @@ app.get('/minha-loja/pedidos', lojaAuth, async (req, res) => {
   }
 });
 
-// Atualizar status do pedido
 app.put('/pedidos/:id/status', lojaAuth, async (req, res) => {
   try {
     const { status } = req.body;

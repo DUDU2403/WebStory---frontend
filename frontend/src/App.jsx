@@ -2,20 +2,18 @@ import { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ToastProvider } from './contexts/ToastContext';
 
-// Pages
-import LandingPage     from './pages/LandingPage';
-import LoginVendedor   from './pages/LoginVendedor';
+import LandingPage      from './pages/LandingPage';
+import LoginVendedor    from './pages/LoginVendedor';
 import RegisterVendedor from './pages/RegisterVendedor';
 import DashboardVendedor from './pages/DashboardVendedor';
-import LojaCliente     from './pages/LojaCliente';
-import AdminPanel      from './pages/AdminPanel';
+import LojaCliente      from './pages/LojaCliente';
+import AdminPanel       from './pages/AdminPanel';
 
 function Router() {
   const { user, loading } = useAuth();
-  const [page, setPage]   = useState('landing'); // landing | loja | login | register | dashboard | admin
+  const [page, setPage]   = useState('landing');
   const [codigoLoja, setCodigoLoja] = useState('');
 
-  // Lê hash da URL para rota de loja pública
   useEffect(() => {
     const handleHash = () => {
       const hash = window.location.hash.replace('#', '');
@@ -44,23 +42,17 @@ function Router() {
     </div>
   );
 
-  // Redireciona vendedor logado para dashboard
   if (page === 'login' && user) { nav('dashboard'); return null; }
 
   switch (page) {
-    case 'loja':
-      return <LojaCliente codigoLoja={codigoLoja} nav={nav} />;
-    case 'login':
-      return <LoginVendedor nav={nav} />;
-    case 'register':
-      return <RegisterVendedor nav={nav} />;
+    case 'loja':      return <LojaCliente codigoLoja={codigoLoja} nav={nav} />;
+    case 'login':     return <LoginVendedor nav={nav} />;
+    case 'register':  return <RegisterVendedor nav={nav} />;
     case 'dashboard':
       if (!user) { nav('login'); return null; }
       return <DashboardVendedor nav={nav} />;
-    case 'admin':
-      return <AdminPanel nav={nav} />;
-    default:
-      return <LandingPage nav={nav} />;
+    case 'admin':     return <AdminPanel nav={nav} />;
+    default:          return <LandingPage nav={nav} />;
   }
 }
 

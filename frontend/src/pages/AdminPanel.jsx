@@ -15,7 +15,11 @@ function Spinner() {
 
 export default function AdminPanel({ nav }) {
   const { show } = useToast();
-  const [token, setToken]     = useState(() => localStorage.getItem('admin_token'));
+  const [token, setToken] = useState(() => {
+    const t = localStorage.getItem('admin_token');
+    if (t) localStorage.setItem('token', t); // garante que o interceptor do axios usa o token admin
+    return t;
+  });
   const [loginForm, setLoginForm] = useState({ email: import.meta.env.VITE_ADMIN_EMAIL || '', senha: '' });
   const [loginLoading, setLoginLoading] = useState(false);
   const [section, setSection] = useState('stats');
@@ -45,12 +49,15 @@ export default function AdminPanel({ nav }) {
   };
 
   const doLogin = async () => {
+    if (!loginForm.email || !loginForm.senha) { show('Preencha e-mail e senha.', 'error'); return; }
     setLoginLoading(true);
     try {
+      // Injeta token temporariamente para o login
+      localStorage.setItem('token', '');
       const { data } = await adminLogin(loginForm);
       localStorage.setItem('admin_token', data.token);
-      // Injeta token nas requisições
-      const { default: api } = await import('../api');
+      // Usa o token admin nas próximas requisições
+      localStorage.setItem('token', data.token);
       setToken(data.token);
       show('Bem-vindo, admin!', 'success');
     } catch (e) {
@@ -91,7 +98,7 @@ export default function AdminPanel({ nav }) {
         <button className="btn btn-ghost btn-sm" onClick={() => nav('landing')} style={{ marginBottom: 24, paddingLeft: 0 }}>
           <ArrowLeft size={16} /> Voltar
         </button>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 32 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
           <div style={{ width: 44, height: 44, background: '#1e293b', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Shield size={22} color="white" />
           </div>
@@ -100,22 +107,36 @@ export default function AdminPanel({ nav }) {
             <p style={{ fontSize: 13, color: 'var(--text-3)' }}>Painel do administrador</p>
           </div>
         </div>
+
+        <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 10, padding: '12px 14px', marginBottom: 24, display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+          <Key size={15} color="#2563eb" style={{ marginTop: 2, flexShrink: 0 }} />
+          <p style={{ fontSize: 13, color: '#1e40af', lineHeight: 1.6 }}>
+            <strong>Primeiro acesso?</strong> Digite o e-mail de admin e escolha uma senha. O sistema vai criá-la automaticamente.
+          </p>
+        </div>
+
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div>
-            <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-2)', display: 'block', marginBottom: 5 }}>E-mail</label>
-            <input className="input" type="email" value={loginForm.email} onChange={e => setLoginForm(f => ({ ...f, email: e.target.value }))} />
+            <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-2)', display: 'block', marginBottom: 5 }}>E-mail do admin</label>
+            <input className="input" type="email" value={loginForm.email} onChange={e => setLoginForm(f => ({ ...f, email: e.target.value }))} placeholder={import.meta.env.VITE_ADMIN_EMAIL || 'admin@email.com'} />
           </div>
           <div>
-            <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-2)', display: 'block', marginBottom: 5 }}>Senha</label>
+            <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-2)', display: 'block', marginBottom: 5 }}>
+              Senha {!loginForm.email ? '' : <span style={{ fontWeight: 400, color: 'var(--text-3)' }}>(defina uma no primeiro acesso)</span>}
+            </label>
             <div style={{ position: 'relative' }}>
-              <input className="input" type={showPass ? 'text' : 'password'} value={loginForm.senha} onChange={e => setLoginForm(f => ({ ...f, senha: e.target.value }))} onKeyDown={e => e.key === 'Enter' && doLogin()} style={{ paddingRight: 44 }} />
+              <input className="input" type={showPass ? 'text' : 'password'} value={loginForm.senha}
+                onChange={e => setLoginForm(f => ({ ...f, senha: e.target.value }))}
+                onKeyDown={e => e.key === 'Enter' && doLogin()}
+                placeholder="Digite a senha desejada"
+                style={{ paddingRight: 44 }} />
               <button onClick={() => setShowPass(v => !v)} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)' }}>
                 {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
           </div>
           <button className="btn btn-primary btn-lg" onClick={doLogin} disabled={loginLoading} style={{ width: '100%', marginTop: 8, background: '#1e293b' }}>
-            {loginLoading ? <Spinner /> : 'Entrar'}
+            {loginLoading ? <Spinner /> : 'Entrar / Criar acesso'}
           </button>
         </div>
       </div>
@@ -141,7 +162,7 @@ export default function AdminPanel({ nav }) {
               {s.label}
             </button>
           ))}
-          <button onClick={() => { localStorage.removeItem('admin_token'); setToken(null); }}
+          <button onClick={() => { localStorage.removeItem('admin_token'); localStorage.removeItem('token'); setToken(null); }}
             style={{ marginLeft: 8, padding: '6px 12px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 13, background: 'rgba(239,68,68,.2)', color: '#fca5a5', display: 'flex', alignItems: 'center', gap: 6 }}>
             <LogOut size={14} /> Sair
           </button>

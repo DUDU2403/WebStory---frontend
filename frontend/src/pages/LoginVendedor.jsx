@@ -67,7 +67,7 @@ export default function LoginVendedor({ nav }) {
 
         <p style={{ textAlign: 'center', marginTop: 24, fontSize: 14, color: 'var(--text-2)' }}>
           Não tem conta?{' '}
-          <button onClick={() => nav('register')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--brand)', fontWeight: 600 }}>
+          <button onClick={() => nav('register-vendedor')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--brand)', fontWeight: 600 }}>
             Criar loja
           </button>
         </p>

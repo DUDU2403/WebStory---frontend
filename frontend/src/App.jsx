@@ -19,7 +19,7 @@ function Spinner() {
 }
 
 function Router() {
-  const { user, loading, isCliente, isVendedor } = useAuth();
+  const { loading, isCliente, isVendedor } = useAuth();
   const [page, setPage] = useState('');
 
   useEffect(() => {
@@ -36,19 +36,27 @@ function Router() {
 
   if (loading) return <Spinner />;
 
-  // Rotas especiais sempre acessíveis
-  if (page === 'admin')         return <AdminPanel nav={nav} />;
-  if (page === 'login-vendedor') return <LoginVendedor nav={nav} />;
-  if (page === 'register-vendedor') return <RegisterVendedor nav={nav} />;
+  // ── Rotas públicas — sempre acessíveis ────────────────────────
+  if (page === 'admin') return <AdminPanel nav={nav} />;
 
-  // Painel do vendedor
+  if (page === 'login-vendedor') {
+    if (isVendedor) { nav('dashboard'); return null; }
+    return <LoginVendedor nav={nav} />;
+  }
+
+  if (page === 'register-vendedor') {
+    if (isVendedor) { nav('dashboard'); return null; }
+    return <RegisterVendedor nav={nav} />;
+  }
+
+  // ── Painel do vendedor ────────────────────────────────────────
   if (page === 'dashboard') {
     if (!isVendedor) { nav('login-vendedor'); return null; }
     return <Dashboard nav={nav} />;
   }
 
-  // Vitrine — precisa estar logado como cliente
-  if (page === 'vitrine' || page === '') {
+  // ── Vitrine do cliente ────────────────────────────────────────
+  if (page === 'vitrine') {
     if (isVendedor) { nav('dashboard'); return null; }
     if (!isCliente) return <AuthCliente nav={nav} />;
     return (
@@ -58,13 +66,17 @@ function Router() {
     );
   }
 
-  // Redireciona usuários logados para o lugar certo
-  if (page === 'home' || page === '') {
-    if (isVendedor) { nav('dashboard'); return null; }
-    if (isCliente)  { nav('vitrine');   return null; }
-    return <AuthCliente nav={nav} />;
+  // ── Home / raiz ───────────────────────────────────────────────
+  if (isVendedor) { nav('dashboard'); return null; }
+  if (isCliente) {
+    return (
+      <CartProvider>
+        <Vitrine nav={nav} />
+      </CartProvider>
+    );
   }
 
+  // Sem login → tela de cadastro/login do cliente
   return <AuthCliente nav={nav} />;
 }
 

@@ -52,16 +52,20 @@ export default function AdminPanel({ nav }) {
     if (!loginForm.email || !loginForm.senha) { show('Preencha e-mail e senha.', 'error'); return; }
     setLoginLoading(true);
     try {
-      // Injeta token temporariamente para o login
-      localStorage.setItem('token', '');
-      const { data } = await adminLogin(loginForm);
+      const BASE = import.meta.env.VITE_API_URL || 'http://localhost:10000';
+      const res = await fetch(`${BASE}/admin/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(loginForm),
+      });
+      const data = await res.json();
+      if (!res.ok) { show(data.message || 'Acesso negado.', 'error'); return; }
       localStorage.setItem('admin_token', data.token);
-      // Usa o token admin nas próximas requisições
       localStorage.setItem('token', data.token);
       setToken(data.token);
       show('Bem-vindo, admin!', 'success');
     } catch (e) {
-      show(e.response?.data?.message || 'Acesso negado.', 'error');
+      show('Erro ao conectar com o servidor.', 'error');
     } finally { setLoginLoading(false); }
   };
 

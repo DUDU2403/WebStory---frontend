@@ -16,7 +16,16 @@ export default function LoginVendedor({ nav }) {
     setLoading(true);
     try {
       const { data } = await lojaLogin(form);
-      login(data.token, data.loja);
+
+      // ✅ CORREÇÃO: garante que a role está presente nos dados do usuário
+      // O backend pode retornar 'role' dentro de data.loja, ou pode não retornar.
+      // Forçamos 'loja' como padrão para que isVendedor funcione corretamente.
+      const userData = {
+        ...data.loja,
+        role: data.loja.role || 'loja',
+      };
+
+      login(data.token, userData);
       show('Bem-vindo de volta!', 'success');
       nav(data.loja.isAdmin ? 'admin' : 'dashboard');
     } catch (e) {

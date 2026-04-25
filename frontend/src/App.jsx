@@ -20,14 +20,15 @@ function Spinner() {
 
 function Router() {
   const { loading, isCliente, isVendedor } = useAuth();
-  const [page, setPage] = useState('');
+
+  // ✅ CORREÇÃO: inicializa já com o hash atual, evita frame em branco
+  const [page, setPage] = useState(() => window.location.hash.replace('#', '') || 'home');
 
   useEffect(() => {
     const read = () => {
       const h = window.location.hash.replace('#', '');
       setPage(h || 'home');
     };
-    read();
     window.addEventListener('hashchange', read);
     return () => window.removeEventListener('hashchange', read);
   }, []);

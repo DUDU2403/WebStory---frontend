@@ -19,16 +19,15 @@ function Spinner() {
 }
 
 function Router() {
-  const { loading, isCliente, isVendedor } = useAuth();
-
-  // ✅ CORREÇÃO: inicializa já com o hash atual, evita frame em branco
-  const [page, setPage] = useState(() => window.location.hash.replace('#', '') || 'home');
+  const { user, loading, isCliente, isVendedor } = useAuth();
+  const [page, setPage] = useState('');
 
   useEffect(() => {
     const read = () => {
       const h = window.location.hash.replace('#', '');
       setPage(h || 'home');
     };
+    read();
     window.addEventListener('hashchange', read);
     return () => window.removeEventListener('hashchange', read);
   }, []);
@@ -37,27 +36,19 @@ function Router() {
 
   if (loading) return <Spinner />;
 
-  // ── Rotas públicas — sempre acessíveis ────────────────────────
-  if (page === 'admin') return <AdminPanel nav={nav} />;
+  // Rotas especiais sempre acessíveis
+  if (page === 'admin')         return <AdminPanel nav={nav} />;
+  if (page === 'login-vendedor') return <LoginVendedor nav={nav} />;
+  if (page === 'register-vendedor') return <RegisterVendedor nav={nav} />;
 
-  if (page === 'login-vendedor') {
-    if (isVendedor) { nav('dashboard'); return null; }
-    return <LoginVendedor nav={nav} />;
-  }
-
-  if (page === 'register-vendedor') {
-    if (isVendedor) { nav('dashboard'); return null; }
-    return <RegisterVendedor nav={nav} />;
-  }
-
-  // ── Painel do vendedor ────────────────────────────────────────
+  // Painel do vendedor
   if (page === 'dashboard') {
     if (!isVendedor) { nav('login-vendedor'); return null; }
     return <Dashboard nav={nav} />;
   }
 
-  // ── Vitrine do cliente ────────────────────────────────────────
-  if (page === 'vitrine') {
+  // Vitrine — precisa estar logado como cliente
+  if (page === 'vitrine' || page === '') {
     if (isVendedor) { nav('dashboard'); return null; }
     if (!isCliente) return <AuthCliente nav={nav} />;
     return (
@@ -67,17 +58,13 @@ function Router() {
     );
   }
 
-  // ── Home / raiz ───────────────────────────────────────────────
-  if (isVendedor) { nav('dashboard'); return null; }
-  if (isCliente) {
-    return (
-      <CartProvider>
-        <Vitrine nav={nav} />
-      </CartProvider>
-    );
+  // Redireciona usuários logados para o lugar certo
+  if (page === 'home' || page === '') {
+    if (isVendedor) { nav('dashboard'); return null; }
+    if (isCliente)  { nav('vitrine');   return null; }
+    return <AuthCliente nav={nav} />;
   }
 
-  // Sem login → tela de cadastro/login do cliente
   return <AuthCliente nav={nav} />;
 }
 

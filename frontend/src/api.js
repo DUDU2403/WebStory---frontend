@@ -15,10 +15,10 @@ export const adminLogin       = (d)      => api.post('/admin/login', d);
 export const adminGetStats    = ()       => api.get('/admin/stats');
 export const adminGetChaves   = ()       => api.get('/admin/chaves');
 export const adminGerarChave  = ()       => api.post('/admin/chaves');
-export const adminDeleteChave    = (id)     => api.delete(`/admin/chaves/${id}`);
+export const adminDelChave    = (id)     => api.delete(`/admin/chaves/${id}`);
 export const adminGetLojas    = ()       => api.get('/admin/lojas');
 export const adminSetStatus   = (id, a)  => api.put(`/admin/lojas/${id}/status`, { ativa: a });
-export const adminDeleteLoja     = (id)     => api.delete(`/admin/lojas/${id}`);
+export const adminDelLoja     = (id)     => api.delete(`/admin/lojas/${id}`);
 
 // ── LOJA (dono) ────────────────────────────────────────────
 export const lojaRegister     = (d)      => api.post('/loja/register', d);

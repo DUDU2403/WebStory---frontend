@@ -6,8 +6,8 @@ import {
   BarChart2, RefreshCw
 } from 'lucide-react';
 import {
-  adminGetStats, adminGetChaves, adminGerarChave, adminDelChave,
-  adminGetLojas, adminSetStatus, adminDelLoja
+  adminGetStats, adminGetChaves, adminGerarChave, adminDeleteChave,
+  adminGetLojas, adminSetStatus, adminDeleteLoja
 } from '../api';
 import config from '../config';
 
@@ -223,7 +223,7 @@ export default function AdminPanel({ nav }) {
                         {!c.usada && (
                           <button className="btn btn-danger btn-sm" onClick={async () => {
                             if (!confirm('Remover chave?')) return;
-                            await adminDelChave(c._id); loadData();
+                            await adminDeleteChave(c._id); loadData();
                           }}>
                             <Trash2 size={13} />
                           </button>
@@ -280,7 +280,7 @@ export default function AdminPanel({ nav }) {
                           </button>
                           <button className="btn btn-danger btn-sm" onClick={async () => {
                             if (!confirm(`Remover loja "${l.nome}"? Esta ação não pode ser desfeita.`)) return;
-                            await adminDelLoja(l._id); loadData();
+                            await adminDeleteLoja(l._id); loadData();
                           }}>
                             <Trash2 size={13} />
                           </button>

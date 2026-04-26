@@ -1,7 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap');
 
-/* Na v4, usamos apenas o import principal ou preflight + utilities com ponto e vírgula */
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
   --brand: #16a34a;
@@ -21,7 +22,6 @@
   --shadow-lg: 0 12px 40px rgba(0,0,0,.12), 0 4px 12px rgba(0,0,0,.06);
 }
 
-/* O resto do seu código permanece igual daqui para baixo */
 * {
   box-sizing: border-box;
   margin: 0;

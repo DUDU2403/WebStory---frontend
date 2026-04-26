@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
-import { Eye, EyeOff, UserPlus, LogIn, Store, ArrowRight } from 'lucide-react';
+import { Eye, EyeOff, UserPlus, LogIn, Store, ArrowRight, Sun, Moon } from 'lucide-react';
 import { clienteRegister, clienteLogin, lojaInfo } from '../api';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
+import { useTheme } from '../contexts/ThemeContext';
 import config from '../config';
 
 export default function AuthCliente({ nav }) {
   const { login } = useAuth();
   const { show }  = useToast();
+  const { isDark, toggleTheme } = useTheme();
   const [modo, setModo]       = useState('login');
   const [loading, setLoading] = useState(false);
   const [showPass, setShowPass] = useState(false);
@@ -35,6 +37,30 @@ export default function AuthCliente({ nav }) {
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', background: 'var(--surface-2)' }}>
+      {/* Botão de tema */}
+      <button
+        onClick={toggleTheme}
+        style={{
+          position: 'fixed',
+          top: 20,
+          right: 20,
+          width: 44,
+          height: 44,
+          borderRadius: 12,
+          border: '1px solid var(--border)',
+          background: 'var(--surface)',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: 'var(--text-1)',
+          zIndex: 50
+        }}
+        title={isDark ? 'Modo claro' : 'Modo escuro'}
+      >
+        {isDark ? <Sun size={20} /> : <Moon size={20} />}
+      </button>
+
       {/* Lado esquerdo */}
       <div style={{ flex: 1, background: config.corSecundaria, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 40, color: 'white' }} className="hide-mobile">
         <div style={{ maxWidth: 360, textAlign: 'center' }}>

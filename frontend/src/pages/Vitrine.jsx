@@ -2,12 +2,14 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Search, ShoppingCart, X, Plus, Minus, Package, Star, Tag,
   Truck, Store, Phone, MapPin, User, LogOut, ChevronDown,
-  CheckCircle, ArrowRight, Grid, List, SlidersHorizontal, Heart
+  CheckCircle, ArrowRight, Grid, List, SlidersHorizontal, Heart,
+  Sun, Moon
 } from 'lucide-react';
 import { getProdutos, getSugestoes, getCategorias, criarPedido, lojaInfo } from '../api';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
+import { useTheme } from '../contexts/ThemeContext';
 import config from '../config';
 
 // ── Helpers ──────────────────────────────────────────────────
@@ -395,6 +397,7 @@ export default function Vitrine({ nav }) {
   const { user, logout } = useAuth();
   const { count }        = useCart();
   const { show }         = useToast();
+  const { isDark, toggleTheme } = useTheme();
 
   const [loja, setLoja]           = useState(null);
   const [produtos, setProdutos]   = useState([]);
@@ -460,6 +463,9 @@ export default function Vitrine({ nav }) {
 
           {/* Ações */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+            <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'white', padding: 8, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={toggleTheme} title={isDark ? 'Modo claro' : 'Modo escuro'}>
+              {isDark ? <Sun size={20} /> : <Moon size={20} />}
+            </button>
             <button style={{ position: 'relative', background: 'none', border: 'none', cursor: 'pointer', color: 'white', padding: 8, borderRadius: 8 }} onClick={() => setCartOpen(true)}>
               <ShoppingCart size={22} />
               {count > 0 && <span className="cart-badge">{count}</span>}

@@ -63,4 +63,8 @@ export const atualizarPedido    = (id,s) => api.put(`/pedidos/${id}/status`, { s
 export const criarVendaAvulsa   = (d)    => api.post('/vendas-avulsas', d);
 export const getVendasAvulsas   = ()     => api.get('/vendas-avulsas');
 
+// ── UPLOAD ─────────────────────────────────────────────────
+export const uploadImagem       = (d)    => api.post('/upload', d);
+export const uploadImagemProduto= (d)    => api.post('/upload/produto', d);
+
 export default api;

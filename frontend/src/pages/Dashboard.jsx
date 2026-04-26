@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
+import { useTheme } from '../contexts/ThemeContext';
 import {
   LayoutDashboard, Package, ClipboardList, TrendingDown,
   Users, ShoppingBag, LogOut, Menu, X, Plus, Edit, Trash2,
   AlertTriangle, ArrowUp, ArrowDown, Eye, EyeOff, Copy,
-  Store, Settings, Search, CheckCircle, ToggleLeft, ToggleRight
+  Store, Settings, Search, CheckCircle, ToggleLeft, ToggleRight,
+  Sun, Moon
 } from 'lucide-react';
 import {
   getPainelProdutos, criarProduto, editarProduto, deletarProduto,
@@ -15,6 +17,7 @@ import {
   criarVendaAvulsa, getVendasAvulsas,
   lojaUpdatePerfil, getClientes
 } from '../api';
+import ImageUploader from '../components/ImageUploader';
 import config from '../config';
 
 // ── Utilitários ──────────────────────────────────────────────
@@ -71,7 +74,6 @@ function ModalProduto({ produto, onClose, onSaved }) {
           { label: 'Categoria', key: 'categoria', ph: 'Ex: baterias, telas...' },
           { label: 'Estoque atual', key: 'estoque', type: 'number', ph: '0' },
           { label: 'Estoque mínimo', key: 'estoqueMin', type: 'number', ph: '5' },
-          { col: '1/-1', label: 'URL da imagem', key: 'imagemUrl', ph: 'https://...' },
         ].map(f => (
           <div key={f.key} style={{ gridColumn: f.col || 'auto' }}>
             <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-2)', display: 'block', marginBottom: 5 }}>{f.label}</label>
@@ -84,6 +86,14 @@ function ModalProduto({ produto, onClose, onSaved }) {
           <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-2)', display: 'block', marginBottom: 5 }}>Descrição</label>
           <textarea className="input" rows={3} placeholder="Descrição do produto..." value={form.descricao || ''}
             onChange={e => set('descricao', e.target.value)} style={{ resize: 'vertical' }} />
+        </div>
+        <div style={{ gridColumn: '1/-1' }}>
+          <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-2)', display: 'block', marginBottom: 5 }}>Imagem do produto</label>
+          <ImageUploader
+            onImageSelect={(img) => set('imagemUrl', img)}
+            label="Enviar imagem do produto"
+            maxSizeMB={5}
+          />
         </div>
         <div style={{ gridColumn: '1/-1', display: 'flex', gap: 20, flexWrap: 'wrap' }}>
           {[
@@ -333,6 +343,7 @@ function ModalVendaAvulsa({ produtos, onClose, onSaved }) {
 export default function Dashboard({ nav }) {
   const { user, logout, updateUser, isDono, isFuncionario } = useAuth();
   const { show } = useToast();
+  const { isDark, toggleTheme } = useTheme();
 
   const [section, setSection]     = useState('overview');
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -452,6 +463,9 @@ export default function Dashboard({ nav }) {
             <h2 style={{ fontSize: 17 }}>{navItems.find(n => n.key === section)?.label}</h2>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button className="btn btn-ghost btn-sm" onClick={toggleTheme} title={isDark ? 'Modo claro' : 'Modo escuro'}>
+              {isDark ? <Sun size={16} /> : <Moon size={16} />}
+            </button>
             <button className="btn btn-primary btn-sm" style={{ background: config.corPrimaria }} onClick={() => setModalVenda(true)}>
               <ShoppingBag size={14} /> Venda avulsa
             </button>
@@ -853,14 +867,31 @@ export default function Dashboard({ nav }) {
                     { label: 'Nome da loja', key: 'nome' },
                     { label: 'Telefone / WhatsApp', key: 'telefone' },
                     { label: 'Endereço', key: 'endereco' },
-                    { label: 'URL foto de perfil', key: 'fotoPerfil' },
-                    { label: 'URL banner', key: 'bannerFundo' },
                   ].map(f => (
                     <div key={f.key}>
                       <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-2)', display: 'block', marginBottom: 5 }}>{f.label}</label>
                       <input className="input" value={perfilForm[f.key] || ''} onChange={e => setPerfilForm(p => ({ ...p, [f.key]: e.target.value }))} />
                     </div>
                   ))}
+                  
+                  <div>
+                    <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-2)', display: 'block', marginBottom: 5 }}>Foto de perfil da loja</label>
+                    <ImageUploader
+                      onImageSelect={(img) => setPerfilForm(p => ({ ...p, fotoPerfil: img }))}
+                      label="Enviar foto de perfil"
+                      maxSizeMB={5}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-2)', display: 'block', marginBottom: 5 }}>Banner/Capa da loja</label>
+                    <ImageUploader
+                      onImageSelect={(img) => setPerfilForm(p => ({ ...p, bannerFundo: img }))}
+                      label="Enviar banner"
+                      maxSizeMB={5}
+                    />
+                  </div>
+
                   <button className="btn btn-primary" style={{ alignSelf: 'flex-end', background: config.corPrimaria }} onClick={async () => {
                     try {
                       const { data: d } = await lojaUpdatePerfil(perfilForm);

@@ -8,8 +8,8 @@ const config = {
   descricao:    'Os melhores produtos com os melhores preços.',
 
   // Contato
-  whatsapp:     '+5511999999999',     // somente números com DDD e DDI
-  telefone:     '+551199999-9999',
+  whatsapp:     '5511999999999',     // somente números com DDD e DDI
+  telefone:     '(11) 99999-9999',
   email:        'contato@minhaloja.com',
   endereco:     'Rua Exemplo, 123 — Bairro, Cidade/UF',
 

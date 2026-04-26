@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
 import { ToastProvider } from './contexts/ToastContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 
 import AuthCliente      from './pages/AuthCliente';
 import Vitrine          from './pages/Vitrine';
@@ -70,10 +71,12 @@ function Router() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <ToastProvider>
-        <Router />
-      </ToastProvider>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <ToastProvider>
+          <Router />
+        </ToastProvider>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }

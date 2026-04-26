@@ -1,13 +1,15 @@
 import { useState } from 'react';
-import { Eye, EyeOff, ArrowLeft, Store, Users } from 'lucide-react';
+import { Eye, EyeOff, ArrowLeft, Store, Users, Sun, Moon } from 'lucide-react';
 import { lojaLogin, funcLogin } from '../api';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
+import { useTheme } from '../contexts/ThemeContext';
 import config from '../config';
 
 export default function LoginVendedor({ nav }) {
   const { login } = useAuth();
   const { show }  = useToast();
+  const { isDark, toggleTheme } = useTheme();
   const [tipo, setTipo]         = useState('dono');
   const [email, setEmail]       = useState('');
   const [senha, setSenha]       = useState('');
@@ -33,7 +35,30 @@ export default function LoginVendedor({ nav }) {
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--surface-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+    <div style={{ minHeight: '100vh', background: 'var(--surface-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, position: 'relative' }}>
+      <button
+        onClick={toggleTheme}
+        style={{
+          position: 'absolute',
+          top: 20,
+          right: 20,
+          width: 44,
+          height: 44,
+          borderRadius: 12,
+          border: '1px solid var(--border)',
+          background: 'var(--surface)',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: 'var(--text-1)',
+          zIndex: 50
+        }}
+        title={isDark ? 'Modo claro' : 'Modo escuro'}
+      >
+        {isDark ? <Sun size={20} /> : <Moon size={20} />}
+      </button>
+
       <div className="card animate-slideUp" style={{ width: '100%', maxWidth: 420, padding: 40 }}>
         <button className="btn btn-ghost btn-sm" onClick={() => nav('home')} style={{ marginBottom: 24, paddingLeft: 0 }}>
           <ArrowLeft size={16} /> Voltar

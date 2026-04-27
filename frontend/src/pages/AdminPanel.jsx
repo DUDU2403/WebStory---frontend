@@ -220,14 +220,18 @@ export default function AdminPanel({ nav }) {
                       <td style={{ padding: '12px 16px', fontSize: 13, color: 'var(--text-2)' }}>{c.lojaId?.nome || '—'}</td>
                       <td style={{ padding: '12px 16px', fontSize: 13, color: 'var(--text-2)' }}>{new Date(c.criadaEm).toLocaleDateString('pt-BR')}</td>
                       <td style={{ padding: '12px 16px' }}>
-                        {!c.usada && (
-                          <button className="btn btn-danger btn-sm" onClick={async () => {
-                            if (!confirm('Remover chave?')) return;
-                            await adminDelChave(c._id); loadData();
-                          }}>
-                            <Trash2 size={13} />
-                          </button>
-                        )}
+                        <button className="btn btn-danger btn-sm" onClick={async () => {
+                          if (!confirm(`Remover chave ${c.usada ? 'usada' : 'disponível'}?`)) return;
+                          try {
+                            await adminDelChave(c._id);
+                            show('Chave removida!', 'success');
+                            loadData();
+                          } catch (e) {
+                            show(e.response?.data?.message || 'Erro ao remover.', 'error');
+                          }
+                        }}>
+                          <Trash2 size={13} />
+                        </button>
                       </td>
                     </tr>
                   ))}

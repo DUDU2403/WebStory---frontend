@@ -7,15 +7,17 @@ import {
   Users, ShoppingBag, LogOut, Menu, X, Plus, Edit, Trash2,
   AlertTriangle, ArrowUp, ArrowDown, Eye, EyeOff, Copy,
   Store, Settings, Search, CheckCircle, ToggleLeft, ToggleRight,
-  Sun, Moon
+  Sun, Moon,
 } from 'lucide-react';
+import GlobalSearch from '../components/GlobalSearch';
+import { LineChart, BarChart, PieChart } from '../components/Charts';
 import {
   getPainelProdutos, criarProduto, editarProduto, deletarProduto,
   movimentarEstoque, getHistorico, getAlertas,
   getPainelPedidos, atualizarPedido,
   getFuncionarios, criarFuncionario, editarFuncionario, deletarFuncionario,
   criarVendaAvulsa, getVendasAvulsas,
-  lojaUpdatePerfil, getClientes
+  lojaUpdatePerfil, getClientes,
 } from '../api';
 import ImageUploader from '../components/ImageUploader';
 import config from '../config';
@@ -24,7 +26,26 @@ import config from '../config';
 const fmt = (v) => `${config.moedaSimbolo} ${Number(v).toFixed(2)}`;
 
 function Spinner({ size = 20 }) {
-  return <div style={{ width: size, height: size, border: '2px solid var(--border)', borderTopColor: config.corPrimaria, borderRadius: '50%', animation: 'spin .8s linear infinite', display: 'inline-block' }} />;
+  return (
+    <div style={{
+      width: size, height: size,
+      border: '2px solid var(--border)',
+      borderTopColor: config.corPrimaria,
+      borderRadius: '50%',
+      animation: 'spin .8s linear infinite',
+      display: 'inline-block',
+    }} />
+  );
+}
+
+// Skeleton placeholder para cards de carregamento
+function SkeletonCard() {
+  return (
+    <div className="stat-card" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div className="skeleton" style={{ height: 12, width: '60%' }} />
+      <div className="skeleton" style={{ height: 28, width: '40%' }} />
+    </div>
+  );
 }
 
 // ── Modal genérico ────────────────────────────────────────────
@@ -89,11 +110,7 @@ function ModalProduto({ produto, onClose, onSaved }) {
         </div>
         <div style={{ gridColumn: '1/-1' }}>
           <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-2)', display: 'block', marginBottom: 5 }}>Imagem do produto</label>
-          <ImageUploader
-            onImageSelect={(img) => set('imagemUrl', img)}
-            label="Enviar imagem do produto"
-            maxSizeMB={5}
-          />
+          <ImageUploader onImageSelect={(img) => set('imagemUrl', img)} label="Enviar imagem do produto" maxSizeMB={5} />
         </div>
         <div style={{ gridColumn: '1/-1', display: 'flex', gap: 20, flexWrap: 'wrap' }}>
           {[
@@ -121,8 +138,8 @@ function ModalProduto({ produto, onClose, onSaved }) {
 // ── Modal Estoque ─────────────────────────────────────────────
 function ModalEstoque({ produto, onClose, onSaved }) {
   const { show } = useToast();
-  const [tipo, setTipo]   = useState('entrada');
-  const [qty, setQty]     = useState(1);
+  const [tipo, setTipo]     = useState('entrada');
+  const [qty, setQty]       = useState(1);
   const [motivo, setMotivo] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -183,7 +200,7 @@ function ModalFuncionario({ func, onClose, onSaved }) {
       else await criarFuncionario(form);
       show(func ? 'Funcionário atualizado!' : 'Funcionário adicionado!', 'success');
       onSaved();
-    } catch (e) { show(e.response?.data?.message || 'Erro.', 'error'); }
+    } catch (e) { show(e.response?.data?.message || 'Erro ao salvar funcionário.', 'error'); }
     finally { setLoading(false); }
   };
 
@@ -226,7 +243,7 @@ function ModalVendaAvulsa({ produtos, onClose, onSaved }) {
 
   const prodsFiltrados = produtos.filter(p =>
     p.ativo && p.estoque > 0 &&
-    (p.nome.toLowerCase().includes(busca.toLowerCase()) || p.categoria.toLowerCase().includes(busca.toLowerCase()))
+    (p.nome.toLowerCase().includes(busca.toLowerCase()) || (p.categoria || '').toLowerCase().includes(busca.toLowerCase()))
   );
 
   const addItem = (p) => {
@@ -267,7 +284,6 @@ function ModalVendaAvulsa({ produtos, onClose, onSaved }) {
           <button className="btn btn-ghost btn-sm" onClick={onClose}><X size={18} /></button>
         </div>
         <div style={{ padding: 24, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-          {/* Esquerda: busca de produtos */}
           <div>
             <p style={{ fontWeight: 600, fontSize: 14, marginBottom: 10 }}>Adicionar produtos</p>
             <input className="input" placeholder="Buscar produto..." value={busca} onChange={e => setBusca(e.target.value)} style={{ marginBottom: 10 }} />
@@ -292,8 +308,6 @@ function ModalVendaAvulsa({ produtos, onClose, onSaved }) {
               }
             </div>
           </div>
-
-          {/* Direita: itens da venda */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <p style={{ fontWeight: 600, fontSize: 14 }}>Itens da venda</p>
             <div>
@@ -309,9 +323,9 @@ function ModalVendaAvulsa({ produtos, onClose, onSaved }) {
                     <div key={item._id} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                       <p style={{ flex: 1, fontSize: 13, fontWeight: 500 }}>{item.nome}</p>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <button onClick={() => updateQty(item._id, item.qty - 1)} style={{ width: 24, height: 24, border: '1px solid var(--border)', borderRadius: 5, background: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>-</button>
+                        <button onClick={() => updateQty(item._id, item.qty - 1)} style={{ width: 24, height: 24, border: '1px solid var(--border)', borderRadius: 5, background: 'var(--surface)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>-</button>
                         <span style={{ fontWeight: 700, minWidth: 20, textAlign: 'center' }}>{item.qty}</span>
-                        <button onClick={() => updateQty(item._id, item.qty + 1)} style={{ width: 24, height: 24, border: '1px solid var(--border)', borderRadius: 5, background: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
+                        <button onClick={() => updateQty(item._id, item.qty + 1)} style={{ width: 24, height: 24, border: '1px solid var(--border)', borderRadius: 5, background: 'var(--surface)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
                       </div>
                       <p style={{ fontWeight: 700, fontSize: 13, minWidth: 70, textAlign: 'right', color: config.corPrimaria }}>{fmt(item.preco * item.qty)}</p>
                       <button onClick={() => setItens(prev => prev.filter(i => i._id !== item._id))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)' }}><X size={14} /></button>
@@ -339,16 +353,52 @@ function ModalVendaAvulsa({ produtos, onClose, onSaved }) {
   );
 }
 
+// ── Helpers para gráficos ─────────────────────────────────────
+
+// Agrupa vendas+pedidos por dia (últimos N dias) para LineChart
+function buildFluxoData(pedidos, vendas, days = 14) {
+  const map = {};
+  const now = new Date();
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - i);
+    const key = d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+    map[key] = 0;
+  }
+  [...pedidos, ...vendas].forEach(item => {
+    const d = new Date(item.criadoEm);
+    const key = d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+    if (key in map) map[key]++;
+  });
+  return Object.entries(map).map(([label, value]) => ({ label, value }));
+}
+
+// Monta dados de desempenho por funcionário para BarChart
+function buildFuncData(funcionarios, pedidos, vendas) {
+  return funcionarios.slice(0, 6).map(f => {
+    const total = [...pedidos, ...vendas].filter(v => v.operador === f.nome || v.operador === f._id).length;
+    return { label: f.nome.split(' ')[0], value: total };
+  });
+}
+
 // ── Dashboard principal ───────────────────────────────────────
 export default function Dashboard({ nav }) {
-  const { user, logout, updateUser, isDono, isFuncionario } = useAuth();
+  const { user, logout, updateUser, isDono } = useAuth();
   const { show } = useToast();
   const { isDark, toggleTheme } = useTheme();
 
-  const [section, setSection]     = useState('overview');
+  const [section, setSection]         = useState('overview');
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [data, setData]           = useState({ produtos: [], pedidos: [], alertas: [], historico: [], funcionarios: [], vendas: [], clientes: [] });
-  const [loading, setLoading]     = useState(true);
+  const [data, setData]               = useState({
+    produtos: [], pedidos: [], alertas: [], historico: [],
+    funcionarios: [], vendas: [], clientes: [],
+  });
+  const [loading, setLoading]         = useState(true);
+  const [searchOpen, setSearchOpen]   = useState(false);
+  const [filtroProd, setFiltroProd]   = useState('');
+  const [perfilForm, setPerfilForm]   = useState({
+    nome: user?.nome || '', telefone: '', endereco: '', fotoPerfil: '', bannerFundo: '',
+  });
 
   // Modais
   const [modalProd, setModalProd]   = useState(null);
@@ -356,55 +406,116 @@ export default function Dashboard({ nav }) {
   const [modalFunc, setModalFunc]   = useState(null);
   const [modalVenda, setModalVenda] = useState(false);
 
-  // Filtros
-  const [filtroProd, setFiltroProd] = useState('');
-  const [codVisible, setCodVisible] = useState(false);
-  const [perfilForm, setPerfilForm] = useState({ nome: user?.nome || '', telefone: '', endereco: '', fotoPerfil: '', bannerFundo: '' });
-
+  // ── Carregamento de dados ────────────────────────────────────
+  // FIX: carrega funcionários/clientes de forma independente do isDono
+  // (o backend rejeita com 403 se não for dono, tratado no catch individual)
   const loadAll = async () => {
     setLoading(true);
     try {
       const [p, ped, al, hist, v] = await Promise.all([
-        getPainelProdutos(), getPainelPedidos(), getAlertas(), getHistorico(), getVendasAvulsas(),
+        getPainelProdutos(),
+        getPainelPedidos(),
+        getAlertas(),
+        getHistorico(),
+        getVendasAvulsas(),
       ]);
-      const extras = {};
-      if (isDono) {
+
+      // FIX: tenta carregar dados exclusivos do dono independentemente
+      // O isDono pode estar defasado no momento do mount — deixamos o backend decidir
+      let extras = { funcionarios: [], clientes: [] };
+      try {
         const [f, c] = await Promise.all([getFuncionarios(), getClientes()]);
-        extras.funcionarios = f.data;
-        extras.clientes = c.data;
+        extras.funcionarios = Array.isArray(f.data) ? f.data : [];
+        // FIX SINCRONIZAÇÃO: garante que clientes seja sempre o array atualizado
+        extras.clientes = Array.isArray(c.data) ? c.data : [];
+      } catch {
+        // 403 esperado para funcionários — sem problema
       }
-      setData({ produtos: p.data, pedidos: ped.data, alertas: al.data, historico: hist.data, vendas: v.data, funcionarios: extras.funcionarios || [], clientes: extras.clientes || [] });
-    } catch (e) { show('Erro ao carregar dados.', 'error'); }
-    finally { setLoading(false); }
+
+      setData({
+        produtos:      p.data   || [],
+        pedidos:       ped.data || [],
+        alertas:       al.data  || [],
+        historico:     hist.data|| [],
+        vendas:        v.data   || [],
+        ...extras,
+      });
+    } catch (e) {
+      show('Erro ao carregar dados.', 'error');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  useEffect(() => { loadAll(); }, []);
+  // FIX PERMISSÃO: useEffect sem dependência de isDono para não bloquear
+  // o carregamento inicial. isDono pode ser falso por 1 tick antes de hidratar.
+  useEffect(() => { loadAll(); }, []); // eslint-disable-line
 
+  // ── Cmd+K ────────────────────────────────────────────────────
+  useEffect(() => {
+    const handler = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setSearchOpen(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
+
+  // ── Itens da busca global ────────────────────────────────────
+  const searchItems = [
+    ...data.produtos.map(p   => ({ id: p._id, name: p.nome,              category: p.categoria,                                       type: 'produto' })),
+    ...data.pedidos.map(p    => ({ id: p._id, name: `Pedido – ${p.nomeCliente || 'Cliente'}`, category: new Date(p.criadoEm).toLocaleDateString('pt-BR'), type: 'pedido' })),
+    ...data.clientes.map(c   => ({ id: c._id, name: c.nome,              category: c.email,                                           type: 'cliente' })),
+  ];
+
+  const handleSearchSelect = (item) => {
+    if (item.type === 'produto')  { setSection('products'); setModalProd(data.produtos.find(p => p._id === item.id) || null); }
+    else if (item.type === 'pedido')  setSection('orders');
+    else if (item.type === 'cliente') setSection('clients');
+  };
+
+  // ── Dados para gráficos ──────────────────────────────────────
+  const fluxoData = buildFluxoData(data.pedidos, data.vendas, 14);
+  const funcChartData = buildFuncData(data.funcionarios, data.pedidos, data.vendas);
+  const pieData = [
+    { label: 'Confirmados', value: data.pedidos.filter(p => p.status === 'confirmado').length },
+    { label: 'Pendentes',   value: data.pedidos.filter(p => p.status === 'pendente').length },
+    { label: 'Cancelados',  value: data.pedidos.filter(p => p.status === 'cancelado').length },
+    { label: 'Vendas pres.',value: data.vendas.length },
+  ].filter(d => d.value > 0);
+
+  // ── Stats ────────────────────────────────────────────────────
   const prodsFiltrados = data.produtos.filter(p =>
     p.nome.toLowerCase().includes(filtroProd.toLowerCase()) ||
     (p.categoria || '').toLowerCase().includes(filtroProd.toLowerCase())
   );
 
   const stats = {
-    produtos: data.produtos.length,
-    estoque: data.produtos.reduce((s, p) => s + p.estoque, 0),
-    pedidosPend: data.pedidos.filter(p => p.status === 'pendente').length,
-    faturamento: [...data.pedidos.filter(p => p.status === 'confirmado'), ...data.vendas].reduce((s, p) => s + p.total, 0),
+    produtos:     data.produtos.length,
+    estoque:      data.produtos.reduce((s, p) => s + p.estoque, 0),
+    pedidosPend:  data.pedidos.filter(p => p.status === 'pendente').length,
+    faturamento:  [...data.pedidos.filter(p => p.status === 'confirmado'), ...data.vendas].reduce((s, p) => s + (p.total || 0), 0),
   };
 
+  // ── Nav items ────────────────────────────────────────────────
   const navItems = [
-    { key: 'overview',    label: 'Visão geral',    icon: <LayoutDashboard size={17} /> },
-    { key: 'products',    label: 'Produtos',        icon: <Package size={17} /> },
-    { key: 'orders',      label: 'Pedidos',          icon: <ClipboardList size={17} />, badge: stats.pedidosPend },
-    { key: 'stock',       label: 'Estoque',          icon: <TrendingDown size={17} />, badge: data.alertas.length, badgeColor: 'yellow' },
-    { key: 'sales',       label: 'Venda avulsa',    icon: <ShoppingBag size={17} /> },
+    { key: 'overview',  label: 'Visão geral',    icon: <LayoutDashboard size={17} /> },
+    { key: 'products',  label: 'Produtos',        icon: <Package size={17} /> },
+    { key: 'orders',    label: 'Pedidos',          icon: <ClipboardList size={17} />, badge: stats.pedidosPend },
+    { key: 'stock',     label: 'Estoque',          icon: <TrendingDown size={17} />,  badge: data.alertas.length, badgeColor: 'yellow' },
+    { key: 'sales',     label: 'Venda avulsa',    icon: <ShoppingBag size={17} /> },
+    // FIX PERMISSÃO: itens do menu condicionados ao isDono mas o loadAll
+    // já tentou buscar os dados — a UI simplesmente não mostra se não for dono
     ...(isDono ? [
-      { key: 'team',      label: 'Funcionários',    icon: <Users size={17} /> },
-      { key: 'clients',   label: 'Clientes',         icon: <Users size={17} /> },
-      { key: 'settings',  label: 'Configurações',    icon: <Settings size={17} /> },
+      { key: 'team',     label: 'Funcionários',   icon: <Users size={17} /> },
+      { key: 'clients',  label: 'Clientes',        icon: <Users size={17} /> },
+      { key: 'settings', label: 'Configurações',   icon: <Settings size={17} /> },
     ] : []),
   ];
 
+  // ── Sidebar ──────────────────────────────────────────────────
   const sidebar = (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <div style={{ padding: '20px 16px 14px', borderBottom: '1px solid var(--border)' }}>
@@ -438,8 +549,10 @@ export default function Dashboard({ nav }) {
     </div>
   );
 
+  // ── Render ───────────────────────────────────────────────────
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--surface-2)' }}>
+
       {/* Sidebar desktop */}
       <aside style={{ width: 230, background: 'var(--surface)', borderRight: '1px solid var(--border)', flexShrink: 0, position: 'sticky', top: 0, height: '100vh', overflowY: 'auto' }} className="hide-mobile">
         {sidebar}
@@ -460,9 +573,18 @@ export default function Dashboard({ nav }) {
         <div style={{ background: 'var(--surface)', borderBottom: '1px solid var(--border)', padding: '0 20px', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 10 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <button className="btn btn-ghost btn-sm show-mobile" onClick={() => setSidebarOpen(true)}><Menu size={20} /></button>
-            <h2 style={{ fontSize: 17 }}>{navItems.find(n => n.key === section)?.label}</h2>
+            <h2 style={{ fontSize: 17 }}>{navItems.find(n => n.key === section)?.label || 'Dashboard'}</h2>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button
+              className="btn btn-outline btn-sm"
+              onClick={() => setSearchOpen(true)}
+              title="Busca global (Cmd+K / Ctrl+K)"
+              style={{ display: 'flex', alignItems: 'center', gap: 8 }}
+            >
+              <Search size={14} />
+              <span style={{ fontSize: 12 }}>Cmd+K</span>
+            </button>
             <button className="btn btn-ghost btn-sm" onClick={toggleTheme} title={isDark ? 'Modo claro' : 'Modo escuro'}>
               {isDark ? <Sun size={16} /> : <Moon size={16} />}
             </button>
@@ -473,17 +595,27 @@ export default function Dashboard({ nav }) {
         </div>
 
         <div style={{ padding: 20 }}>
-          {loading && <div style={{ display: 'flex', justifyContent: 'center', padding: 80 }}><Spinner size={40} /></div>}
+
+          {/* ── LOADING ── */}
+          {loading && (
+            <div className="animate-fadeIn">
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: 14, marginBottom: 24 }}>
+                {[0, 1, 2, 3].map(i => <SkeletonCard key={i} />)}
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'center', padding: 40 }}><Spinner size={36} /></div>
+            </div>
+          )}
 
           {/* ── OVERVIEW ── */}
           {!loading && section === 'overview' && (
             <div className="animate-fadeIn">
+              {/* Stat cards */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: 14, marginBottom: 24 }}>
                 {[
-                  { label: 'Produtos', val: stats.produtos, color: '#3b82f6' },
-                  { label: 'Unidades em estoque', val: stats.estoque, color: config.corPrimaria },
-                  { label: 'Pedidos pendentes', val: stats.pedidosPend, color: '#f59e0b' },
-                  { label: 'Faturamento total', val: fmt(stats.faturamento), color: '#8b5cf6' },
+                  { label: 'Produtos',            val: stats.produtos,          color: '#3b82f6' },
+                  { label: 'Unidades em estoque',  val: stats.estoque,           color: config.corPrimaria },
+                  { label: 'Pedidos pendentes',    val: stats.pedidosPend,       color: '#f59e0b' },
+                  { label: 'Faturamento total',    val: fmt(stats.faturamento),  color: '#8b5cf6' },
                 ].map((s, i) => (
                   <div key={i} className="stat-card">
                     <p style={{ fontSize: 12, color: 'var(--text-2)', marginBottom: 8 }}>{s.label}</p>
@@ -492,6 +624,7 @@ export default function Dashboard({ nav }) {
                 ))}
               </div>
 
+              {/* Alerta estoque baixo */}
               {data.alertas.length > 0 && (
                 <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 12, padding: 16, marginBottom: 20, display: 'flex', gap: 12 }}>
                   <AlertTriangle size={18} color="#d97706" style={{ flexShrink: 0 }} />
@@ -502,8 +635,53 @@ export default function Dashboard({ nav }) {
                 </div>
               )}
 
+              {/* ── GRÁFICOS ─────────────────────────────────── */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 24 }}>
+                {/* Gráfico de linha — fluxo de vendas */}
+                <div className="card" style={{ padding: 20 }}>
+                  <p style={{ fontWeight: 600, fontSize: 15, marginBottom: 4 }}>Fluxo de vendas</p>
+                  <p style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: 14 }}>Pedidos + vendas avulsas nos últimos 14 dias</p>
+                  {fluxoData.every(d => d.value === 0)
+                    ? <div style={{ height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-3)', fontSize: 13 }}>
+                        Nenhum dado ainda
+                      </div>
+                    : <LineChart data={fluxoData} height={200} color={config.corPrimaria} />
+                  }
+                </div>
+
+                {/* Gráfico de pizza — status dos pedidos */}
+                <div className="card" style={{ padding: 20, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <p style={{ fontWeight: 600, fontSize: 15, marginBottom: 4, alignSelf: 'flex-start' }}>Status dos pedidos</p>
+                  <p style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: 14, alignSelf: 'flex-start' }}>Distribuição por status</p>
+                  {pieData.length === 0
+                    ? <div style={{ height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-3)', fontSize: 13 }}>
+                        Nenhum pedido registrado
+                      </div>
+                    : <PieChart
+                        data={pieData}
+                        size={180}
+                        colors={[config.corPrimaria, '#f59e0b', '#ef4444', '#3b82f6']}
+                      />
+                  }
+                </div>
+              </div>
+
+              {/* Gráfico de barras — desempenho por funcionário (só dono) */}
+              {isDono && data.funcionarios.length > 0 && (
+                <div className="card" style={{ padding: 20, marginBottom: 24 }}>
+                  <p style={{ fontWeight: 600, fontSize: 15, marginBottom: 4 }}>Desempenho por funcionário</p>
+                  <p style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: 14 }}>Número de vendas / pedidos por operador</p>
+                  {funcChartData.every(d => d.value === 0)
+                    ? <p style={{ fontSize: 13, color: 'var(--text-3)', textAlign: 'center', padding: 20 }}>
+                        Sem vendas registradas por funcionário ainda.
+                      </p>
+                    : <BarChart data={funcChartData} height={200} color={config.corPrimaria} />
+                  }
+                </div>
+              )}
+
+              {/* Últimos pedidos + últimas vendas */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-                {/* Últimos pedidos */}
                 <div className="card" style={{ padding: 18 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 14 }}>
                     <p style={{ fontWeight: 600, fontSize: 15 }}>Últimos pedidos</p>
@@ -524,7 +702,6 @@ export default function Dashboard({ nav }) {
                   {data.pedidos.length === 0 && <p style={{ fontSize: 13, color: 'var(--text-3)', textAlign: 'center', padding: 20 }}>Nenhum pedido.</p>}
                 </div>
 
-                {/* Últimas vendas avulsas */}
                 <div className="card" style={{ padding: 18 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 14 }}>
                     <p style={{ fontWeight: 600, fontSize: 15 }}>Últimas vendas presenciais</p>
@@ -696,7 +873,6 @@ export default function Dashboard({ nav }) {
                   </table>
                 </div>
               </div>
-
               <div className="card" style={{ overflow: 'hidden' }}>
                 <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)', fontWeight: 600 }}>Histórico de movimentações</div>
                 {data.historico.length === 0
@@ -808,8 +984,7 @@ export default function Dashboard({ nav }) {
                             <td style={{ padding: '12px 14px' }}>
                               <div style={{ display: 'flex', gap: 6 }}>
                                 <button className="btn btn-ghost btn-sm" onClick={() => setModalFunc(f)}><Edit size={13} /></button>
-                                <button className={`btn btn-ghost btn-sm`} onClick={async () => { await editarFuncionario(f._id, { ativo: !f.ativo }); loadAll(); }}
-                                  title={f.ativo ? 'Desativar' : 'Ativar'}>
+                                <button className="btn btn-ghost btn-sm" onClick={async () => { await editarFuncionario(f._id, { ativo: !f.ativo }); loadAll(); }} title={f.ativo ? 'Desativar' : 'Ativar'}>
                                   {f.ativo ? <ToggleRight size={15} color={config.corPrimaria} /> : <ToggleLeft size={15} color="var(--text-3)" />}
                                 </button>
                                 <button className="btn btn-ghost btn-sm" style={{ color: '#ef4444' }} onClick={async () => { if (!confirm('Remover funcionário?')) return; await deletarFuncionario(f._id); loadAll(); }}>
@@ -827,9 +1002,18 @@ export default function Dashboard({ nav }) {
           )}
 
           {/* ── CLIENTES ── */}
+          {/* FIX SINCRONIZAÇÃO: data.clientes é sempre re-buscado no loadAll,
+              então ao recarregar a seção os dados estarão atualizados */}
           {!loading && section === 'clients' && isDono && (
             <div className="animate-fadeIn">
-              <p style={{ fontSize: 13, color: 'var(--text-2)', marginBottom: 16 }}>{data.clientes.length} cliente(s) cadastrado(s)</p>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                <p style={{ fontSize: 13, color: 'var(--text-2)' }}>
+                  {data.clientes.length} cliente(s) cadastrado(s)
+                </p>
+                <button className="btn btn-ghost btn-sm" onClick={loadAll}>
+                  ↻ Atualizar
+                </button>
+              </div>
               <div className="card" style={{ overflow: 'hidden' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                   <thead>
@@ -873,25 +1057,14 @@ export default function Dashboard({ nav }) {
                       <input className="input" value={perfilForm[f.key] || ''} onChange={e => setPerfilForm(p => ({ ...p, [f.key]: e.target.value }))} />
                     </div>
                   ))}
-                  
                   <div>
                     <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-2)', display: 'block', marginBottom: 5 }}>Foto de perfil da loja</label>
-                    <ImageUploader
-                      onImageSelect={(img) => setPerfilForm(p => ({ ...p, fotoPerfil: img }))}
-                      label="Enviar foto de perfil"
-                      maxSizeMB={5}
-                    />
+                    <ImageUploader onImageSelect={(img) => setPerfilForm(p => ({ ...p, fotoPerfil: img }))} label="Enviar foto de perfil" maxSizeMB={5} />
                   </div>
-
                   <div>
                     <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-2)', display: 'block', marginBottom: 5 }}>Banner/Capa da loja</label>
-                    <ImageUploader
-                      onImageSelect={(img) => setPerfilForm(p => ({ ...p, bannerFundo: img }))}
-                      label="Enviar banner"
-                      maxSizeMB={5}
-                    />
+                    <ImageUploader onImageSelect={(img) => setPerfilForm(p => ({ ...p, bannerFundo: img }))} label="Enviar banner" maxSizeMB={5} />
                   </div>
-
                   <button className="btn btn-primary" style={{ alignSelf: 'flex-end', background: config.corPrimaria }} onClick={async () => {
                     try {
                       const { data: d } = await lojaUpdatePerfil(perfilForm);
@@ -905,14 +1078,23 @@ export default function Dashboard({ nav }) {
               </div>
             </div>
           )}
+
         </div>
       </main>
 
-      {/* Modais */}
+      {/* ── Modais ── */}
       {modalProd  && <ModalProduto produto={modalProd === 'new' ? null : modalProd} onClose={() => setModalProd(null)} onSaved={() => { setModalProd(null); loadAll(); }} />}
       {modalEst   && <ModalEstoque produto={modalEst} onClose={() => setModalEst(null)} onSaved={() => { setModalEst(null); loadAll(); }} />}
       {modalFunc  && <ModalFuncionario func={modalFunc === 'new' ? null : modalFunc} onClose={() => setModalFunc(null)} onSaved={() => { setModalFunc(null); loadAll(); }} />}
       {modalVenda && <ModalVendaAvulsa produtos={data.produtos} onClose={() => setModalVenda(false)} onSaved={() => { setModalVenda(false); loadAll(); }} />}
+
+      {/* ── Busca global ── */}
+      <GlobalSearch
+        isOpen={searchOpen}
+        onClose={() => setSearchOpen(false)}
+        onSelect={handleSearchSelect}
+        items={searchItems}
+      />
     </div>
   );
 }
